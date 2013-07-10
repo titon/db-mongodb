@@ -8,18 +8,66 @@
 namespace Titon\Model\MongoDb;
 
 use Titon\Model\Driver\AbstractDriver;
+use \MongoClient;
 
 /**
  * A driver that represents the MongoDB database and uses PDO.
  *
  * @package Titon\Model\MongoDb
+ * @method \MongoClient getConnection()
  */
 class MongoDbDriver extends AbstractDriver {
 
 	/**
 	 * Configuration.
 	 */
-	protected $_config = [];
+	protected $_config = [
+		'port' => 27017,
+		'flags' => [
+			'connect' => true
+		]
+	];
+
+	/**
+	 * Connect to the Mongo database.
+	 *
+	 * @return bool
+	 */
+	public function connect() {
+		if ($this->isConnected()) {
+			return true;
+		}
+
+		$server = 'mongodb://';
+
+		if ($socket = $this->getSocket()) {
+			$server .= $socket;
+		} else {
+			if ($user = $this->getUser()) {
+				$server .= $user . ':' . $this->getPassword() . '@';
+			}
+
+			$server .= $this->getHost() . ':' . $this->getPort();
+		}
+
+		$this->_connection = new MongoClient($server, $this->config->flags);
+		$this->_connected = $this->_connection->connected;
+
+		return $this->_connected;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function disconnect() {
+		$this->reset();
+
+		if ($this->isConnected()) {
+			return $this->getConnection()->close(true);
+		}
+
+		return false;
+	}
 
 	/**
 	 * Set the dialect.
