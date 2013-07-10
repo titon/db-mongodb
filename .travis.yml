@@ -1,0 +1,16 @@
+language: php
+
+php:
+  - 5.4
+  - 5.5
+
+services:
+  - mongodb
+
+before_script:
+  - mongo titon_test --eval 'db.addUser("mongo", "test");'
+  - composer selfupdate
+  - composer install
+
+notifications:
+  email: false
