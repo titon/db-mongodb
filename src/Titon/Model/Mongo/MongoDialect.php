@@ -101,7 +101,14 @@ class MongoDialect extends AbstractDialect {
 	 * @return array
 	 */
 	public function buildCreateIndex(MongoCollection $collection, Query $query) {
-		return $collection->ensureIndex($this->formatFields($query), $query->getAttributes() + ['w' => 1]);
+		$fields = $this->formatFields($query);
+
+		$response = $collection->ensureIndex($fields, $query->getAttributes() + ['w' => 1]);
+		$response['params'] = [
+			'fields' => $fields
+		];
+
+		return $response;
 	}
 
 	/**
@@ -119,7 +126,11 @@ class MongoDialect extends AbstractDialect {
 		}
 
 		if ($db->createCollection($name, $query->getAttributes())) {
-			return ['ok' => 1, 'n' => 1];
+			return [
+				'ok' => 1,
+				'n' => 1,
+				'params' => ['name' => $name]
+			];
 		}
 
 		return [
@@ -136,7 +147,14 @@ class MongoDialect extends AbstractDialect {
 	 * @return array
 	 */
 	public function buildDelete(MongoCollection $collection, Query $query) {
-		return $collection->remove($this->formatWhere($query->getWhere()), $query->getAttributes() + ['w' => 1]);
+		$where = $this->formatWhere($query->getWhere());
+
+		$response = $collection->remove($where, $query->getAttributes() + ['w' => 1]);
+		$response['params'] = [
+			'where' => $where
+		];
+
+		return $response;
 	}
 
 	/**
@@ -147,7 +165,14 @@ class MongoDialect extends AbstractDialect {
 	 * @return array
 	 */
 	public function buildDropIndex(MongoCollection $collection, Query $query) {
-		return $collection->deleteIndex($this->formatFields($query), $query->getAttributes() + ['w' => 1]);
+		$fields = $this->formatFields($query);
+
+		$response = $collection->deleteIndex($fields, $query->getAttributes() + ['w' => 1]);
+		$response['params'] = [
+			'fields' => $fields
+		];
+
+		return $response;
 	}
 
 	/**
@@ -170,7 +195,11 @@ class MongoDialect extends AbstractDialect {
 	 */
 	public function buildInsert(MongoCollection $collection, Query $query) {
 		$values = $this->formatValues($query);
+
 		$response = $collection->insert($values, $query->getAttributes() + ['w' => 1]);
+		$response['params'] = [
+			'values' => $values
+		];
 
 		if (isset($values['_id']) && $response['ok']) {
 			$response['id'] = $values['_id'];
@@ -187,7 +216,14 @@ class MongoDialect extends AbstractDialect {
 	 * @return array
 	 */
 	public function buildMultiInsert(MongoCollection $collection, Query $query) {
-		return $collection->batchInsert($this->formatValues($query), $query->getAttributes() + ['w' => 1]);
+		$values = $this->formatValues($query);
+
+		$response =  $collection->batchInsert($values, $query->getAttributes() + ['w' => 1]);
+		$response['params'] = [
+			'values' => $values
+		];
+
+		return $response;
 	}
 
 	/**
@@ -202,6 +238,14 @@ class MongoDialect extends AbstractDialect {
 
 		if ($orderBy = $query->getOrderBy()) {
 			$cursor->sort($this->formatOrderBy($orderBy));
+		}
+
+		if ($limit = $query->getLimit()) {
+			$cursor->limit($this->formatLimit($limit));
+		}
+
+		if ($offset = $query->getOffset()) {
+			$cursor->skip($this->formatLimitOffset($offset));
 		}
 
 		return $cursor;
@@ -226,7 +270,7 @@ class MongoDialect extends AbstractDialect {
 	 * @return array
 	 */
 	public function buildTruncate(MongoCollection $collection, Query $query) {
-		return $collection->remove([]);
+		return $collection->remove([], $query->getAttributes() + ['w' => 1]);
 	}
 
 	/**
@@ -237,7 +281,16 @@ class MongoDialect extends AbstractDialect {
 	 * @return array
 	 */
 	public function buildUpdate(MongoCollection $collection, Query $query) {
-		return $collection->update($this->formatWhere($query->getWhere()), $this->formatFields($query), $query->getAttributes() + ['w' => 1, 'upsert' => true, 'multiple' => true]);
+		$where = $this->formatWhere($query->getWhere());
+		$fields = $this->formatFields($query);
+
+		$response = $collection->update($where, $fields, $query->getAttributes() + ['w' => 1, 'upsert' => true, 'multiple' => true]);
+		$response['params'] = [
+			'where' => $where,
+			'fields' => $fields
+		];
+
+		return $response;
 	}
 
 	/**

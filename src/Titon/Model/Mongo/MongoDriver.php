@@ -27,9 +27,11 @@ class MongoDriver extends AbstractDriver {
 	 * Configuration.
 	 */
 	protected $_config = [
-		'port' => 27017,
+		'host' => MongoClient::DEFAULT_HOST,
+		'port' => MongoClient::DEFAULT_PORT,
 		'flags' => [
-			'connect' => true
+			'connect' => true,
+			'w' => 1
 		]
 	];
 

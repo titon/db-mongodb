@@ -43,14 +43,16 @@ class MongoResult extends AbstractResult {
 
 		if ($response instanceof MongoCursor) {
 			$this->_cursor = $response;
+			$this->_params = $response->info();
 
 			if ($explain = $response->explain()) {
 				$this->_time = $explain['millis'];
 			}
 		} else {
 			$this->_response = $response;
+			$this->_params = $response['params'] + ['ns' => $query->getTable()];
 			$this->_executed = isset($response['ok']);
-			$this->_success = isset($response['ok']) ? (bool) $response['ok'] : false;
+			$this->_success = $this->hasExecuted() ? (bool) $response['ok'] : false;
 
 			if (in_array($query->getType(), [Query::UPDATE, Query::INSERT, Query::DELETE])) {
 				$this->_count = isset($response['n']) ? (int) $response['n'] : 0;
@@ -111,14 +113,6 @@ class MongoResult extends AbstractResult {
 			return $results;
 		}
 
-		if ($limit = $this->getQuery()->getLimit()) {
-			$cursor->limit($limit);
-		}
-
-		if ($offset = $this->getQuery()->getOffset()) {
-			$cursor->skip($offset);
-		}
-
 		while ($cursor->hasNext()) {
 			$results[] = $cursor->current();
 
@@ -132,7 +126,45 @@ class MongoResult extends AbstractResult {
 	 * {@inheritdoc}
 	 */
 	public function getStatement() {
+		$query = $this->getQuery();
+		$params = $this->getParams();
+		$attributes = json_encode($query->getAttributes());
+		$statement = 'db.' . $params['ns'] . '.';
 
+		switch ($query->getType()) {
+			case Query::INSERT:
+				$statement .= sprintf('insert(%s, %s);', json_encode($params['values']), $attributes);
+			break;
+			case Query::MULTI_INSERT:
+				$statement .= sprintf('batchInsert(%s, %s);', json_encode($params['values']), $attributes);
+			break;
+			case Query::SELECT:
+				$statement .= sprintf('find(%s, %s);', json_encode($params['query']), json_encode($params['fields']));
+			break;
+			case Query::UPDATE:
+				$statement .= sprintf('update(%s, %s, %s);', json_encode($params['where']), json_encode($params['fields']), $attributes);
+			break;
+			case Query::DELETE:
+				$statement .= sprintf('remove(%s, %s);', json_encode($params['where']), $attributes);
+			break;
+			case Query::TRUNCATE:
+				$statement .= sprintf('remove([], %s); (truncate)', $attributes);
+			break;
+			case Query::CREATE_TABLE:
+				$statement = sprintf('db.createCollection(%s, %s);', json_encode($params['name']), $attributes);
+			break;
+			case Query::CREATE_INDEX:
+				$statement .= sprintf('ensureIndex(%s, %s);', json_encode($params['fields']), $attributes);
+			break;
+			case Query::DROP_TABLE:
+				$statement .= 'drop();';
+			break;
+			case Query::DROP_INDEX:
+				$statement .= sprintf('deleteIndex(%s);', json_encode($params['fields']));
+			break;
+		}
+
+		return $statement;
 	}
 
 	/**
