@@ -85,6 +85,27 @@ class MongoDriver extends AbstractDriver {
 	/**
 	 * {@inheritdoc}
 	 */
+	public function describeDatabase($database = null) {
+		$db = $this->getConnection()->selectDB($database ?: $this->getDatabase());
+		$schema = [];
+
+		foreach ($db->getCollectionNames() as $collection) {
+			$schema[$collection] = $db->command(['collStats' => $collection]);
+		}
+
+		return $schema;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function describeTable($table) {
+		return []; // MongoDB is schemaless
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
 	public function disconnect() {
 		$this->reset();
 
