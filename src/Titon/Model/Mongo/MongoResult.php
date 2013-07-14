@@ -44,6 +44,9 @@ class MongoResult extends AbstractResult {
 		if ($response instanceof MongoCursor) {
 			$this->_cursor = $response;
 
+			if ($explain = $response->explain()) {
+				$this->_time = $explain['millis'];
+			}
 		} else {
 			$this->_response = $response;
 			$this->_executed = isset($response['ok']);
@@ -54,6 +57,8 @@ class MongoResult extends AbstractResult {
 			} else {
 				$this->_count = 1;
 			}
+
+			$this->_time = number_format(microtime() - $response['startTime'], 5);
 		}
 	}
 

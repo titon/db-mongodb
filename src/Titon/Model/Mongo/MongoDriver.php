@@ -173,12 +173,14 @@ class MongoDriver extends AbstractDriver {
 		} else {
 			$type = $query->getType();
 			$method = 'build' . ucfirst($type);
+			$startTime = microtime();
 
 			if (!method_exists($dialect, $method)) {
 				throw new UnsupportedQueryStatementException(sprintf('Query statement %s does not exist or has not been implemented', $type));
 			}
 
 			$response = call_user_func_array([$dialect, $method], [$db->selectCollection($query->getTable()), $query]);
+			$response['startTime'] = $startTime;
 		}
 
 		// Gather and log result

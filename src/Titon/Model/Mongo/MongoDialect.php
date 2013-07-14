@@ -8,7 +8,6 @@
 namespace Titon\Model\Mongo;
 
 use Titon\Model\Driver\Dialect\AbstractDialect;
-use Titon\Model\Exception\UnsupportedQueryStatementException;
 use Titon\Model\Mongo\Exception\UnsupportedFeatureException;
 use Titon\Model\Query;
 use Titon\Model\Query\Expr;
@@ -213,10 +212,10 @@ class MongoDialect extends AbstractDialect {
 	 *
 	 * @param \MongoCollection $collection
 	 * @param \Titon\Model\Query\SubQuery $query
-	 * @throws \Titon\Model\Exception\UnsupportedQueryStatementException
+	 * @throws \Titon\Model\Mongo\Exception\UnsupportedFeatureException
 	 */
 	public function buildSubQuery(MongoCollection $collection, SubQuery $query) {
-		throw new UnsupportedQueryStatementException('MongoDB does not support sub-queries');
+		throw new UnsupportedFeatureException('MongoDB does not support sub-queries');
 	}
 
 	/**
