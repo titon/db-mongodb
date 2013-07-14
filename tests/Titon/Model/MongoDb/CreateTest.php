@@ -5,7 +5,7 @@
  * @link		http://titon.io
  */
 
-namespace Titon\Model\MongoDb;
+namespace Titon\Model\Mongo;
 
 use Titon\Model\Data\AbstractCreateTest;
 
