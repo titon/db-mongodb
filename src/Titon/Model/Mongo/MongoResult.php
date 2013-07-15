@@ -162,6 +162,9 @@ class MongoResult extends AbstractResult {
 			case Query::DROP_INDEX:
 				$statement .= sprintf('deleteIndex(%s);', json_encode($params['fields']));
 			break;
+			default:
+				$statement = '(unknown statement)';
+			break;
 		}
 
 		return $statement;

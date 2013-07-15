@@ -87,20 +87,6 @@ class MongoDriver extends AbstractDriver {
 	/**
 	 * {@inheritdoc}
 	 */
-	public function describeDatabase($database = null) {
-		$db = $this->getConnection()->selectDB($database ?: $this->getDatabase());
-		$schema = [];
-
-		foreach ($db->getCollectionNames() as $collection) {
-			$schema[$collection] = $db->command(['collStats' => $collection]);
-		}
-
-		return $schema;
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
 	public function describeTable($table) {
 		return []; // MongoDB is schemaless
 	}
@@ -157,6 +143,13 @@ class MongoDriver extends AbstractDriver {
 
 	/**
 	 * {@inheritdoc}
+	 */
+	public function listTables($database = null) {
+		return $this->getConnection()->selectDB($database ?: $this->getDatabase())->getCollectionNames();
+	}
+
+	/**
+	 * {@inheritdoc}
 	 *
 	 * @throws \Titon\Model\Exception\InvalidQueryException
 	 */
@@ -187,16 +180,17 @@ class MongoDriver extends AbstractDriver {
 		}
 
 		// Execute the query using the dialect
-		$dialect = $this->getDialect();
 		$db = $this->getConnection()->selectDB($this->getDatabase());
+		$dialect = $this->getDialect();
+		$startTime = microtime();
 
 		if ($query->getType() === Query::CREATE_TABLE) {
 			$response = $dialect->buildCreateTable($db, $query);
+			$response['startTime'] = $startTime;
 
 		} else {
 			$type = $query->getType();
 			$method = 'build' . ucfirst($type);
-			$startTime = microtime();
 
 			if (!method_exists($dialect, $method)) {
 				throw new UnsupportedQueryStatementException(sprintf('Query statement %s does not exist or has not been implemented', $type));

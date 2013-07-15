@@ -8,7 +8,7 @@
 namespace Titon\Model\Mongo;
 
 use Titon\Model\Driver\Dialect\AbstractDialect;
-use Titon\Model\Mongo\Exception\UnsupportedFeatureException;
+use Titon\Model\Exception\UnsupportedFeatureException;
 use Titon\Model\Query;
 use Titon\Model\Query\Expr;
 use Titon\Model\Query\Predicate;
@@ -70,12 +70,12 @@ class MongoDialect extends AbstractDialect {
 		self::SIZE			=> '$size',
 		self::TYPE			=> '$type',
 		self::WHERE			=> '$where',
-		'>'		=> '$gt',
-		'>='	=> '$gte',
-		'<'		=> '$lt',
-		'<='	=> '$lte',
-		'!='	=> '$ne',
-		'%'		=> '$mod',
+		'>'					=> '$gt',
+		'>='				=> '$gte',
+		'<'					=> '$lt',
+		'<='				=> '$lte',
+		'!='				=> '$ne',
+		'%'					=> '$mod',
 	];
 
 	/**
@@ -256,7 +256,7 @@ class MongoDialect extends AbstractDialect {
 	 *
 	 * @param \MongoCollection $collection
 	 * @param \Titon\Model\Query\SubQuery $query
-	 * @throws \Titon\Model\Mongo\Exception\UnsupportedFeatureException
+	 * @throws \Titon\Model\Exception\UnsupportedFeatureException
 	 */
 	public function buildSubQuery(MongoCollection $collection, SubQuery $query) {
 		throw new UnsupportedFeatureException('MongoDB does not support sub-queries');
@@ -402,7 +402,7 @@ class MongoDialect extends AbstractDialect {
 	/**
 	 * {@inheritdoc}
 	 *
-	 * @throws \Titon\Model\Mongo\Exception\UnsupportedFeatureException
+	 * @throws \Titon\Model\Exception\UnsupportedFeatureException
 	 */
 	public function formatGroupBy(array $groupBy) {
 		throw new UnsupportedFeatureException('MongoDB does not record grouping');
@@ -418,7 +418,7 @@ class MongoDialect extends AbstractDialect {
 	/**
 	 * {@inheritdoc}
 	 *
-	 * @throws \Titon\Model\Mongo\Exception\UnsupportedFeatureException
+	 * @throws \Titon\Model\Exception\UnsupportedFeatureException
 	 */
 	public function formatJoins(array $joins) {
 		throw new UnsupportedFeatureException('MongoDB does not support joins');
