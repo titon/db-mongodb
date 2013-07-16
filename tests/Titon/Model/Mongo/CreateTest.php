@@ -8,8 +8,6 @@
 namespace Titon\Model\Mongo;
 
 use Titon\Model\Query;
-use Titon\Test\Stub\Model\Book;
-use Titon\Test\Stub\Model\Genre;
 use Titon\Test\Stub\Model\Series;
 use Titon\Test\Stub\Model\User;
 use Titon\Test\TestCase;
@@ -234,6 +232,42 @@ class CreateTest extends TestCase {
 		$this->assertEquals(5, $user->select()->count());
 
 		$user->query(Query::DROP_TABLE)->save();
+	}
+
+	/**
+	 * Test inserts with arrays and objects.
+	 */
+	public function testCreateWithNestedData() {
+		$this->loadFixtures('Users');
+
+		$user = new User();
+		$data = [
+			'string' => 'miles',
+			'boolean' => true,
+			'integer' => 123456,
+			'null' => null,
+			'array' => [1, 2, 3, 4, 5],
+			'object' => [
+				'foo' => 'bar'
+			],
+			'datetime' => new \MongoDate()
+		];
+
+		$last_id = $user->create($data);
+		$this->assertInstanceOf('MongoId', $last_id);
+
+		$this->assertEquals([
+			'_id' => $last_id,
+			'string' => 'miles',
+			'boolean' => true,
+			'integer' => 123456,
+			'null' => null,
+			'array' => [1, 2, 3, 4, 5],
+			'object' => [
+				'foo' => 'bar'
+			],
+			'datetime' => new \MongoDate()
+		], $user->data);
 	}
 
 }

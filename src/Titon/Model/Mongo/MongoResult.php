@@ -93,10 +93,11 @@ class MongoResult extends AbstractResult {
 	 * {@inheritdoc}
 	 */
 	public function fetch() {
-		$results = $this->fetchAll();
+		$cursor = $this->_cursor;
+		$results = [];
 
-		if (isset($results[0])) {
-			return $results[0];
+		while ($cursor->hasNext()) {
+			return $cursor->getNext();
 		}
 
 		return $results;
@@ -106,6 +107,10 @@ class MongoResult extends AbstractResult {
 	 * {@inheritdoc}
 	 */
 	public function fetchAll() {
+		if (isset($this->_response['retval'])) {
+			return $this->_response['retval'];
+		}
+
 		$cursor = $this->_cursor;
 		$results = [];
 
@@ -126,14 +131,8 @@ class MongoResult extends AbstractResult {
 	public function getStatement() {
 		$query = $this->getQuery();
 		$params = $this->getParams();
-		$attributes = $query->getAttributes();
+		$attributes = json_encode($query->getAttributes());
 		$statement = 'db.' . $params['ns'] . '.';
-
-		// Flag count
-		$isCount = isset($attributes['count']);
-		unset($attributes['count']);
-
-		$attributes = json_encode($attributes);
 
 		switch ($query->getType()) {
 			case Query::INSERT:
@@ -144,7 +143,31 @@ class MongoResult extends AbstractResult {
 				$statement .= sprintf('batchInsert(%s, %s)', json_encode($params['values']), $attributes);
 			break;
 			case Query::SELECT:
-				$statement .= sprintf('find(%s, %s)', json_encode($params['query']), json_encode($params['fields']));
+				$where = [];
+				$order = [];
+
+				if ($query->getGroupBy()) {
+					$statement .= sprintf('group(%s, function(){}, ["items":[]], null, %s, null)', json_encode($params['groupBy']), json_encode($params['where']));
+
+				} else {
+					if (is_array($params['query'])) {
+						if (isset($params['query']['$query'])) {
+							$where = $params['query']['$query'];
+						} else {
+							$where = $params['query'];
+						}
+
+						if (isset($params['query']['$orderby'])) {
+							$order = $params['query']['$orderby'];
+						}
+					}
+
+					$statement .= sprintf('find(%s, %s)', json_encode($where), json_encode($params['fields']));
+				}
+
+				if ($order) {
+					$statement .= sprintf('.sort(%s)', json_encode($order));
+				}
 
 				if ($limit = $query->getLimit()) {
 					$statement .= sprintf('.limit(%s)', $limit);
@@ -154,9 +177,10 @@ class MongoResult extends AbstractResult {
 					$statement .= sprintf('.skip(%s)', $offset);
 				}
 
+				/* TODO
 				if ($isCount) {
 					$statement .= '.count()';
-				}
+				}*/
 			break;
 			case Query::UPDATE:
 				$statement .= sprintf('update(%s, %s, %s)', json_encode($params['where']), json_encode($params['fields']), $attributes);

@@ -62,6 +62,7 @@ class MongoDialect extends AbstractDialect {
 		self::EXISTS		=> '$exists',
 		self::IN			=> '$in',
 		self::INC			=> '$inc',
+		self::IS_NOT_NULL	=> '$ne',
 		self::ISOLATED		=> '$isolated',
 		self::NOR			=> '$nor',
 		self::NOT			=> '$not',
@@ -97,83 +98,6 @@ class MongoDialect extends AbstractDialect {
 	 * {@inheritdoc}
 	 */
 	protected $_attributes = [];
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function buildCreateIndex(Query $query) {
-		throw new UnsupportedFeatureException('MongoDB does not support CREATE INDEX statement building');
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function buildCreateTable(Query $query) {
-		throw new UnsupportedFeatureException('MongoDB does not support CREATE TABLE statement building');
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function buildDelete(Query $query) {
-		throw new UnsupportedFeatureException('MongoDB does not support DELETE statement building');
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function buildDropIndex(Query $query) {
-		throw new UnsupportedFeatureException('MongoDB does not support DROP INDEX statement building');
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function buildDropTable(Query $query) {
-		throw new UnsupportedFeatureException('MongoDB does not support DROP TABLE statement building');
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function buildInsert(Query $query) {
-		throw new UnsupportedFeatureException('MongoDB does not support INSERT statement building');
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function buildMultiInsert(Query $query) {
-		throw new UnsupportedFeatureException('MongoDB does not support multi-insert building');
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function buildSelect(Query $query) {
-		throw new UnsupportedFeatureException('MongoDB does not support SELECT statement building');
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function buildSubQuery(SubQuery $query) {
-		throw new UnsupportedFeatureException('MongoDB does not support sub-query building');
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function buildTruncate(Query $query) {
-		throw new UnsupportedFeatureException('MongoDB does not support TRUNCATE statement building');
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function buildUpdate(Query $query) {
-		throw new UnsupportedFeatureException('MongoDB does not support UPDATE statement building');
-	}
 
 	/**
 	 * Execute the ensureIndex() method to create a collection index.
@@ -317,24 +241,43 @@ class MongoDialect extends AbstractDialect {
 
 	/**
 	 * Execute the find() method to select records and return a cursor object.
+	 * If a group by is declared, execute the group() method instead.
 	 *
 	 * @param \MongoCollection $collection
 	 * @param \Titon\Model\Query $query
-	 * @return \MongoCursor
+	 * @return \MongoCursor|array
 	 */
 	public function executeSelect(MongoCollection $collection, Query $query) {
-		$cursor = $collection->find($this->formatWhere($query->getWhere()), $this->formatFields($query));
+		$where = $this->formatWhere($query->getWhere());
+
+		if ($groupBy = $query->getGroupBy()) {
+			$groupBy = $this->formatGroupBy($groupBy);
+
+			$response = $collection->group($groupBy, ['items' => []], 'function(item, results) { results.items.push(item); }', [
+				'condition' => $where
+			]);
+
+			$response['params'] = [
+				'where' => $where,
+				'groupBy' => $groupBy
+			];
+
+			return $response;
+		}
+
+		// Regular find using a cursor
+		$cursor = $collection->find($where, $this->formatFields($query));
 
 		if ($orderBy = $query->getOrderBy()) {
 			$cursor->sort($this->formatOrderBy($orderBy));
 		}
 
-		if ($limit = $query->getLimit()) {
-			$cursor->limit($this->formatLimit($limit));
+		if ($offset = $query->getOffset()) {
+			$cursor->skip($this->formatLimitOffset(null, $offset));
 		}
 
-		if ($offset = $query->getOffset()) {
-			$cursor->skip($this->formatLimitOffset($offset));
+		if ($limit = $query->getLimit()) {
+			$cursor->limit($this->formatLimit($limit));
 		}
 
 		return $cursor;
@@ -388,11 +331,13 @@ class MongoDialect extends AbstractDialect {
 	 * {@inheritdoc}
 	 */
 	public function formatExpression(Expr $expr) {
+		$field = $expr->getField();
 		$operator = $expr->getOperator();
 		$value = $expr->getValue();
 
 		switch ($operator) {
 			case '=':
+			case Expr::NULL:
 				// Do nothing
 			break;
 			case Expr::BETWEEN:
@@ -403,26 +348,26 @@ class MongoDialect extends AbstractDialect {
 			break;
 			case Expr::NOT_BETWEEN:
 				$value = [
-					$this->getClause('>=') => $value[1],
-					$this->getClause('<=') => $value[0]
+					[$field => [$this->getClause('<') => $value[0]]],
+					[$field => [$this->getClause('>') => $value[1]]]
 				];
+
+				return [$this->getClause(self::EITHER) => $value];
 			break;
 			case Expr::LIKE:
 			case Expr::REGEXP:
 			case Expr::RLIKE:
+			case Expr::NOT_LIKE:
+			case Expr::NOT_REGEXP:
 			case self::REGEX:
 			case '$regex':
 				if (!($value instanceof MongoRegex)) {
 					$value = new MongoRegex($value);
 				}
-			break;
-			case Expr::NOT_LIKE:
-			case Expr::NOT_REGEXP:
-				if (!($value instanceof MongoRegex)) {
-					$value = new MongoRegex($value);
-				}
 
-				$value = [$this->getClause(self::NOT) => $value];
+				if ($operator === Expr::NOT_LIKE || $operator === Expr::NOT_REGEXP) {
+					$value = [$this->getClause(self::NOT) => $value];
+				}
 			break;
 			default:
 				if (substr($operator, 0, 1) !== '$') {
@@ -433,7 +378,7 @@ class MongoDialect extends AbstractDialect {
 			break;
 		}
 
-		return [$expr->getField() => $value];
+		return [$field => $value];
 	}
 
 	/**
@@ -506,11 +451,9 @@ class MongoDialect extends AbstractDialect {
 
 	/**
 	 * {@inheritdoc}
-	 *
-	 * @throws \Titon\Model\Exception\UnsupportedFeatureException
 	 */
 	public function formatGroupBy(array $groupBy) {
-		throw new UnsupportedFeatureException('MongoDB does not support record grouping');
+		return $this->formatOrderBy($groupBy);
 	}
 
 	/**
@@ -614,6 +557,15 @@ class MongoDialect extends AbstractDialect {
 		return [
 			$this->getClause($predicate->getType()) => $output
 		];
+	}
+
+	/**
+	 * {@inheritdoc}
+	 *
+	 * @throws \Titon\Model\Exception\UnsupportedFeatureException
+	 */
+	public function formatSubQuery(SubQuery $query) {
+		throw new UnsupportedFeatureException('MongoDB does not support sub-queries');
 	}
 
 	/**

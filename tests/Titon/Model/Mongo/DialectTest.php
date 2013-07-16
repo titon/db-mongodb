@@ -78,7 +78,7 @@ class DialectTest extends TestCase {
 		$this->assertEquals(['id' => ['$gte' => 1, '$lte' => 3]], $this->object->formatExpression($expr));
 
 		$expr = new Expr('id', 'notBetween', [1, 3]);
-		$this->assertEquals(['id' => ['$gte' => 3, '$lte' => 1]], $this->object->formatExpression($expr));
+		$this->assertEquals(['$or' => [['id' => ['$lt' => 1]], ['id' => ['$gt' => 3]]]], $this->object->formatExpression($expr));
 
 		// Direct operator usage
 		$expr = new Expr('id', '$in', [1, 3]);
