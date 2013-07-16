@@ -9,6 +9,7 @@ services:
 
 before_script:
   #- mongo titon_test --eval 'db.addUser("mongo", "test");'
+  - pecl install mongo
   - composer selfupdate
   - composer install
 
