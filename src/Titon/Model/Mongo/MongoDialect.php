@@ -476,6 +476,7 @@ class MongoDialect extends AbstractDialect {
 
 					foreach ($fields as $field) {
 						if ($field instanceof Func) {
+							// COUNT(), etc
 							continue;
 						} else {
 							$clean[$field] = 1;

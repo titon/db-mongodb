@@ -114,9 +114,7 @@ class MongoResult extends AbstractResult {
 		}
 
 		while ($cursor->hasNext()) {
-			$results[] = $cursor->current();
-
-			$cursor->next();
+			$results[] = $cursor->getNext();
 		}
 
 		return $results;
