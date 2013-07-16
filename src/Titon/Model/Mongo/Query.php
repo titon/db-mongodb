@@ -16,6 +16,7 @@ class Query extends \Titon\Model\Query {
 
 	/**
 	 * Used to track count() queries.
+	 * Doesn't do anything useful.
 	 *
 	 * @type boolean
 	 */
