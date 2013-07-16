@@ -293,7 +293,10 @@ class MongoDialect extends AbstractDialect {
 	 * @return array
 	 */
 	public function executeTruncate(MongoCollection $collection, Query $query) {
-		return $collection->remove([], $query->getAttributes() + ['w' => 1]);
+		$response = $collection->remove([], $query->getAttributes() + ['w' => 1]);
+		$response['params'] = [];
+
+		return $response;
 	}
 
 	/**

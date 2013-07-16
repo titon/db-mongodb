@@ -7,13 +7,13 @@
 
 namespace Titon\Model\Mongo;
 
-use Exception;
 use Titon\Model\Entity;
 use Titon\Test\Stub\Model\Book;
 use Titon\Test\Stub\Model\Genre;
 use Titon\Test\Stub\Model\Stat;
 use Titon\Test\Stub\Model\User;
 use Titon\Test\TestCase;
+use \Exception;
 
 /**
  * Test class for database reading.
