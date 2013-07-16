@@ -22,8 +22,8 @@ $loader->add('Titon\\Model\\Mongo', TEST_DIR);
 $db = [
 	'database' => 'titon_test',
 	'host' => '127.0.0.1',
-	'user' => 'mongo',
-	'pass' => 'test'
+	'user' => '',
+	'pass' => ''
 ];
 
 Titon\Common\Config::set('db', $db);
