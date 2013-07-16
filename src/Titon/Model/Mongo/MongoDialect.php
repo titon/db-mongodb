@@ -13,9 +13,11 @@ use Titon\Model\Query;
 use Titon\Model\Query\Expr;
 use Titon\Model\Query\Predicate;
 use Titon\Model\Query\SubQuery;
+use Titon\Utility\Hash;
 use \MongoCollection;
 use \MongoDB;
 use \MongoRegex;
+use \Closure;
 
 /**
  * Inherit the default dialect rules and override for MongoDB specific syntax.
@@ -31,6 +33,7 @@ class MongoDialect extends AbstractDialect {
 	const ISOLATED = 'isolated';
 	const NOT = 'not';
 	const NOR = 'nor';
+	const REGEX = 'regex';
 	const RENAME = 'rename';
 	const SET = 'set';
 	const SET_ON_INSERT = 'setOnInsert';
@@ -54,14 +57,15 @@ class MongoDialect extends AbstractDialect {
 		self::ALL			=> '$all',
 		self::ALSO			=> '$and',
 		self::BIT			=> '$bit',
+		self::EITHER		=> '$or',
 		self::EXISTS		=> '$exists',
 		self::IN			=> '$in',
 		self::INC			=> '$inc',
 		self::ISOLATED		=> '$isolated',
-		self::MAYBE			=> '$or',
 		self::NOR			=> '$nor',
 		self::NOT			=> '$not',
 		self::NOT_IN		=> '$nin',
+		self::REGEX			=> '$regex',
 		self::REGEXP		=> '$regex',
 		self::REMOVE		=> '$unset',
 		self::RENAME		=> '$rename',
@@ -94,13 +98,90 @@ class MongoDialect extends AbstractDialect {
 	protected $_attributes = [];
 
 	/**
+	 * {@inheritdoc}
+	 */
+	public function buildCreateIndex(Query $query) {
+		throw new UnsupportedFeatureException('MongoDB does not support CREATE INDEX statement building');
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function buildCreateTable(Query $query) {
+		throw new UnsupportedFeatureException('MongoDB does not support CREATE TABLE statement building');
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function buildDelete(Query $query) {
+		throw new UnsupportedFeatureException('MongoDB does not support DELETE statement building');
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function buildDropIndex(Query $query) {
+		throw new UnsupportedFeatureException('MongoDB does not support DROP INDEX statement building');
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function buildDropTable(Query $query) {
+		throw new UnsupportedFeatureException('MongoDB does not support DROP TABLE statement building');
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function buildInsert(Query $query) {
+		throw new UnsupportedFeatureException('MongoDB does not support INSERT statement building');
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function buildMultiInsert(Query $query) {
+		throw new UnsupportedFeatureException('MongoDB does not support multi-insert building');
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function buildSelect(Query $query) {
+		throw new UnsupportedFeatureException('MongoDB does not support SELECT statement building');
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function buildSubQuery(SubQuery $query) {
+		throw new UnsupportedFeatureException('MongoDB does not support sub-query building');
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function buildTruncate(Query $query) {
+		throw new UnsupportedFeatureException('MongoDB does not support TRUNCATE statement building');
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function buildUpdate(Query $query) {
+		throw new UnsupportedFeatureException('MongoDB does not support UPDATE statement building');
+	}
+
+	/**
 	 * Execute the ensureIndex() method to create a collection index.
 	 *
 	 * @param \MongoCollection $collection
 	 * @param \Titon\Model\Query $query
 	 * @return array
 	 */
-	public function buildCreateIndex(MongoCollection $collection, Query $query) {
+	public function executeCreateIndex(MongoCollection $collection, Query $query) {
 		$fields = $this->formatFields($query);
 
 		$response = $collection->ensureIndex($fields, $query->getAttributes() + ['w' => 1]);
@@ -118,7 +199,7 @@ class MongoDialect extends AbstractDialect {
 	 * @param \Titon\Model\Query $query
 	 * @return array
 	 */
-	public function buildCreateTable(MongoDB $db, Query $query) {
+	public function executeCreateTable(MongoDB $db, Query $query) {
 		$name = $query->getTable();
 
 		if ($schema = $query->getSchema()) {
@@ -146,7 +227,7 @@ class MongoDialect extends AbstractDialect {
 	 * @param \Titon\Model\Query $query
 	 * @return array
 	 */
-	public function buildDelete(MongoCollection $collection, Query $query) {
+	public function executeDelete(MongoCollection $collection, Query $query) {
 		$where = $this->formatWhere($query->getWhere());
 
 		$response = $collection->remove($where, $query->getAttributes() + ['w' => 1]);
@@ -164,7 +245,7 @@ class MongoDialect extends AbstractDialect {
 	 * @param \Titon\Model\Query $query
 	 * @return array
 	 */
-	public function buildDropIndex(MongoCollection $collection, Query $query) {
+	public function executeDropIndex(MongoCollection $collection, Query $query) {
 		$fields = $this->formatFields($query);
 
 		$response = $collection->deleteIndex($fields, $query->getAttributes() + ['w' => 1]);
@@ -182,7 +263,7 @@ class MongoDialect extends AbstractDialect {
 	 * @param \Titon\Model\Query $query
 	 * @return array
 	 */
-	public function buildDropTable(MongoCollection $collection, Query $query) {
+	public function executeDropTable(MongoCollection $collection, Query $query) {
 		return $collection->drop();
 	}
 
@@ -193,7 +274,7 @@ class MongoDialect extends AbstractDialect {
 	 * @param \Titon\Model\Query $query
 	 * @return array
 	 */
-	public function buildInsert(MongoCollection $collection, Query $query) {
+	public function executeInsert(MongoCollection $collection, Query $query) {
 		$values = $this->formatValues($query);
 
 		$response = $collection->insert($values, $query->getAttributes() + ['w' => 1]);
@@ -215,7 +296,7 @@ class MongoDialect extends AbstractDialect {
 	 * @param \Titon\Model\Query $query
 	 * @return array
 	 */
-	public function buildMultiInsert(MongoCollection $collection, Query $query) {
+	public function executeMultiInsert(MongoCollection $collection, Query $query) {
 		$values = $this->formatValues($query);
 
 		$response =  $collection->batchInsert($values, $query->getAttributes() + ['w' => 1]);
@@ -233,7 +314,7 @@ class MongoDialect extends AbstractDialect {
 	 * @param \Titon\Model\Query $query
 	 * @return \MongoCursor
 	 */
-	public function buildSelect(MongoCollection $collection, Query $query) {
+	public function executeSelect(MongoCollection $collection, Query $query) {
 		$cursor = $collection->find($this->formatWhere($query->getWhere()), $this->formatFields($query));
 
 		if ($orderBy = $query->getOrderBy()) {
@@ -252,24 +333,13 @@ class MongoDialect extends AbstractDialect {
 	}
 
 	/**
-	 * Disable sub-queries.
-	 *
-	 * @param \MongoCollection $collection
-	 * @param \Titon\Model\Query\SubQuery $query
-	 * @throws \Titon\Model\Exception\UnsupportedFeatureException
-	 */
-	public function buildSubQuery(MongoCollection $collection, SubQuery $query) {
-		throw new UnsupportedFeatureException('MongoDB does not support sub-queries');
-	}
-
-	/**
 	 * MongoDB doesn't support truncation, so simply remove all records.
 	 *
 	 * @param \MongoCollection $collection
 	 * @param \Titon\Model\Query $query
 	 * @return array
 	 */
-	public function buildTruncate(MongoCollection $collection, Query $query) {
+	public function executeTruncate(MongoCollection $collection, Query $query) {
 		return $collection->remove([], $query->getAttributes() + ['w' => 1]);
 	}
 
@@ -280,7 +350,7 @@ class MongoDialect extends AbstractDialect {
 	 * @param \Titon\Model\Query $query
 	 * @return array
 	 */
-	public function buildUpdate(MongoCollection $collection, Query $query) {
+	public function executeUpdate(MongoCollection $collection, Query $query) {
 		$where = $this->formatWhere($query->getWhere());
 		$fields = $this->formatFields($query);
 
@@ -296,6 +366,19 @@ class MongoDialect extends AbstractDialect {
 	/**
 	 * {@inheritdoc}
 	 */
+	public function formatDefault($value) {
+		if ($value instanceof Closure) {
+			$value = $value($this);
+		} else {
+			$value = $this->getDriver()->escape($value);
+		}
+
+		return $value;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
 	public function formatExpression(Expr $expr) {
 		$operator = $expr->getOperator();
 		$value = $expr->getValue();
@@ -306,24 +389,32 @@ class MongoDialect extends AbstractDialect {
 			break;
 			case Expr::BETWEEN:
 				$value = [
-					$this->getClause('gte') => $value[0],
-					$this->getClause('lte') => $value[1]
+					$this->getClause('>=') => $value[0],
+					$this->getClause('<=') => $value[1]
 				];
 			break;
 			case Expr::NOT_BETWEEN:
 				$value = [
-					$this->getClause('gte') => $value[1],
-					$this->getClause('lte') => $value[0]
+					$this->getClause('>=') => $value[1],
+					$this->getClause('<=') => $value[0]
 				];
 			break;
 			case Expr::LIKE:
 			case Expr::REGEXP:
 			case Expr::RLIKE:
-				$value = new MongoRegex($value);
+			case self::REGEX:
+			case '$regex':
+				if (!($value instanceof MongoRegex)) {
+					$value = new MongoRegex($value);
+				}
 			break;
 			case Expr::NOT_LIKE:
 			case Expr::NOT_REGEXP:
-				$value = [$this->getClause(self::NOT) => new MongoRegex($value)];
+				if (!($value instanceof MongoRegex)) {
+					$value = new MongoRegex($value);
+				}
+
+				$value = [$this->getClause(self::NOT) => $value];
 			break;
 			default:
 				if (substr($operator, 0, 1) !== '$') {
@@ -343,25 +434,15 @@ class MongoDialect extends AbstractDialect {
 	public function formatFields(Query $query) {
 		switch ($query->getType()) {
 			case Query::CREATE_INDEX:
-				$fields = [];
-
-				foreach ($query->getFields() as $field => $sort) {
-					if (is_numeric($field)) {
-						$field = $sort;
-						$sort = self::ASC;
-					}
-
-					$fields[$field] = $sort;
-				}
-
-				return $this->formatOrderBy($fields);
+				return $this->formatOrderBy($query->getFields());
 			break;
+
 			case Query::UPDATE:
 				$fields = [];
 				$set = [];
 
 				foreach ($query->getFields() as $field => $value) {
-					if (substr($fields, 0, 1) === '$') {
+					if (substr($field, 0, 1) === '$') {
 						$fields[$field] = $value;
 					} else {
 						$set[$field] = $value;
@@ -378,6 +459,7 @@ class MongoDialect extends AbstractDialect {
 
 				return $fields;
 			break;
+
 			case Query::SELECT:
 				$fields = $query->getFields();
 
@@ -386,6 +468,11 @@ class MongoDialect extends AbstractDialect {
 						return 1;
 					}, array_flip($fields));
 
+					if (isset($fields['id'])) {
+						$fields['_id'] = $fields['id'];
+						unset($fields['id']);
+					}
+
 					if (empty($fields['_id'])) {
 						$fields['_id'] = 0;
 					}
@@ -393,6 +480,7 @@ class MongoDialect extends AbstractDialect {
 
 				return $fields;
 			break;
+
 			default:
 				return $query->getFields();
 			break;
@@ -405,7 +493,7 @@ class MongoDialect extends AbstractDialect {
 	 * @throws \Titon\Model\Exception\UnsupportedFeatureException
 	 */
 	public function formatGroupBy(array $groupBy) {
-		throw new UnsupportedFeatureException('MongoDB does not record grouping');
+		throw new UnsupportedFeatureException('MongoDB does not support record grouping');
 	}
 
 	/**
@@ -445,10 +533,19 @@ class MongoDialect extends AbstractDialect {
 		$output = [];
 
 		foreach ($orderBy as $field => $direction) {
-			if ($direction === self::ASC) {
-				$output[$field] = MongoCollection::ASCENDING;
-			} else {
+			if (is_numeric($field)) {
+				$field = $direction;
+				$direction = null;
+			}
+
+			if (is_numeric($direction)) {
+				$output[$field] = $direction;
+
+			} else if ($direction === self::DESC) {
 				$output[$field] = MongoCollection::DESCENDING;
+
+			} else {
+				$output[$field] = MongoCollection::ASCENDING;
 			}
 		}
 
@@ -461,21 +558,45 @@ class MongoDialect extends AbstractDialect {
 	public function formatPredicate(Predicate $predicate) {
 		$output = [];
 
+		// Or needs to be wrapped in $or arrays
+		if ($predicate->getType() === Predicate::EITHER) {
+			return $this->formatSubPredicate($predicate);
+		}
+
+		// Base $and can use a simple array structure
 		foreach ($predicate->getParams() as $param) {
 			if ($param instanceof Predicate) {
-				$output[$this->getClause($param->getType())] = $this->formatPredicate($param);
+				$output = Hash::merge($output, $this->formatSubPredicate($param));
 
 			} else if ($param instanceof Expr) {
-				$output = $this->formatExpression($param) + $output;
+				$output = Hash::merge($output, $this->formatExpression($param));
 			}
 		}
 
-		// Or needs to be wrapped in $or
-		if ($predicate->getType() === Predicate::EITHER) {
-			return [$this->getClause(self::EITHER) => $output];
+		return $output;
+	}
+
+	/**
+	 * Nested predicates need to have individual values wrapped in arrays.
+	 *
+	 * @param \Titon\Model\Query\Predicate $predicate
+	 * @return array
+	 */
+	public function formatSubPredicate(Predicate $predicate) {
+		$output = [];
+
+		foreach ($predicate->getParams() as $param) {
+			if ($param instanceof Predicate) {
+				$output[] = $this->formatSubPredicate($param);
+
+			} else if ($param instanceof Expr) {
+				$output[] = $this->formatExpression($param);
+			}
 		}
 
-		return $output;
+		return [
+			$this->getClause($predicate->getType()) => $output
+		];
 	}
 
 	/**

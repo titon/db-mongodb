@@ -76,6 +76,10 @@ class MongoDriver extends AbstractDriver {
 			}
 
 			$server .= $this->getHost() . ':' . $this->getPort();
+
+			if ($db = $this->getDatabase()) {
+				$server .= '/' . $db;
+			}
 		}
 
 		$this->_connection = new MongoClient($server, $this->config->flags);
@@ -123,14 +127,23 @@ class MongoDriver extends AbstractDriver {
 	 */
 	public function getSupportedTypes() {
 		return [
-			'string' => 'Titon\Model\Driver\Type\StringType',
+			'int' => 'Titon\Model\Driver\Type\IntType',
+			'int32' => 'Titon\Model\Mongo\Type\Int32Type',
+			'int64' => 'Titon\Model\Mongo\Type\Int64Type',
 			'integer' => 'Titon\Model\Driver\Type\IntType',
+			'string' => 'Titon\Model\Driver\Type\StringType',
 			'number' => 'Titon\Model\Driver\Type\IntType',
 			'array' => 'Titon\Model\Mongo\Type\ArrayType',
 			'object' => 'Titon\Model\Mongo\Type\ObjectType',
 			'boolean' => 'Titon\Model\Driver\Type\BooleanType',
 			'float' => 'Titon\Model\Driver\Type\FloatType',
 			'double' => 'Titon\Model\Driver\Type\DoubleType',
+			'date' => 'Titon\Model\Mongo\Type\DatetimeType',
+			'time' => 'Titon\Model\Mongo\Type\DatetimeType',
+			'datetime' => 'Titon\Model\Mongo\Type\DatetimeType',
+			'timestamp' => 'Titon\Model\Mongo\Type\DatetimeType',
+			'blob' => 'Titon\Model\Mongo\Type\BlobType',
+			'binary' => 'Titon\Model\Mongo\Type\BlobType',
 		];
 	}
 
@@ -185,12 +198,12 @@ class MongoDriver extends AbstractDriver {
 		$startTime = microtime();
 
 		if ($query->getType() === Query::CREATE_TABLE) {
-			$response = $dialect->buildCreateTable($db, $query);
+			$response = $dialect->executeCreateTable($db, $query);
 			$response['startTime'] = $startTime;
 
 		} else {
 			$type = $query->getType();
-			$method = 'build' . ucfirst($type);
+			$method = 'execute' . ucfirst($type);
 
 			if (!method_exists($dialect, $method)) {
 				throw new UnsupportedQueryStatementException(sprintf('Query statement %s does not exist or has not been implemented', $type));
