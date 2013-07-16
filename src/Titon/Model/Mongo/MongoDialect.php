@@ -155,6 +155,8 @@ class MongoDialect extends AbstractDialect {
 	public function executeDelete(MongoCollection $collection, Query $query) {
 		$where = $this->formatWhere($query->getWhere());
 
+		$query->attribute('justOne', ($query->getLimit() == 1));
+
 		$response = $collection->remove($where, $query->getAttributes() + ['w' => 1]);
 		$response['params'] = [
 			'where' => $where

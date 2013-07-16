@@ -7,11 +7,47 @@
 
 namespace Titon\Model\Mongo;
 
-use Titon\Model\Data\AbstractDeleteTest;
+use Titon\Test\Stub\Model\User;
+use Titon\Test\TestCase;
 
 /**
  * Test class for database record deleting.
  */
-class DeleteTest extends AbstractDeleteTest {
+class DeleteTest extends TestCase {
+
+	/**
+	 * Unload fixtures.
+	 */
+	protected function tearDown() {
+		parent::tearDown();
+
+		$this->unloadFixtures();
+	}
+
+	/**
+	 * Test delete with where conditions.
+	 */
+	public function testDeleteConditions() {
+		$this->loadFixtures('Users');
+
+		$user = new User();
+
+		$this->assertSame(5, $user->select()->count());
+		$this->assertSame(3, $user->query(Query::DELETE)->where('age', '>', 30)->save());
+		$this->assertSame(2, $user->select()->count());
+	}
+
+	/**
+	 * Test delete using justOnce option.
+	 */
+	public function testDeleteJustOnce() {
+		$this->loadFixtures('Users');
+
+		$user = new User();
+
+		$this->assertSame(5, $user->select()->count());
+		$this->assertSame(1, $user->query(Query::DELETE)->limit(1)->save());
+		$this->assertSame(4, $user->select()->count());
+	}
 
 }
