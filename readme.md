@@ -9,4 +9,11 @@ Provides MongoDB access for the Titon Model package.
 ### Requirements ###
 
 * PHP 5.4.0
-	* pdo_mongodb
+	* mongo
+
+### To DO ###
+
+* Relational tests
+* MongoDB operator tests
+* Replica set support
+* ID checks
