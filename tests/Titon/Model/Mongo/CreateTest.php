@@ -241,6 +241,7 @@ class CreateTest extends TestCase {
 		$this->loadFixtures('Users');
 
 		$user = new User();
+		$date = new \MongoDate();
 		$data = [
 			'string' => 'miles',
 			'boolean' => true,
@@ -250,7 +251,7 @@ class CreateTest extends TestCase {
 			'object' => [
 				'foo' => 'bar'
 			],
-			'datetime' => new \MongoDate()
+			'datetime' => $date
 		];
 
 		$last_id = $user->create($data);
@@ -266,7 +267,7 @@ class CreateTest extends TestCase {
 			'object' => [
 				'foo' => 'bar'
 			],
-			'datetime' => new \MongoDate()
+			'datetime' => $date
 		], $user->data);
 	}
 
