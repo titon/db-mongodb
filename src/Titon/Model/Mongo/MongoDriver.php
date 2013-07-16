@@ -119,7 +119,7 @@ class MongoDriver extends AbstractDriver {
 	 * {@inheritdoc}
 	 */
 	public function getLastInsertID(Model $model) {
-		return (string) $this->_lastID;
+		return $this->_lastID;
 	}
 
 	/**
@@ -199,7 +199,6 @@ class MongoDriver extends AbstractDriver {
 
 		if ($query->getType() === Query::CREATE_TABLE) {
 			$response = $dialect->executeCreateTable($db, $query);
-			$response['startTime'] = $startTime;
 
 		} else {
 			$type = $query->getType();
@@ -210,12 +209,15 @@ class MongoDriver extends AbstractDriver {
 			}
 
 			$response = call_user_func_array([$dialect, $method], [$db->selectCollection($query->getTable()), $query]);
-			$response['startTime'] = $startTime;
 		}
 
 		// Gather and log result
-		if (is_array($response) && isset($response['id'])) {
-			$this->_lastID = $response['id'];
+		if (is_array($response)) {
+			$response['startTime'] = $startTime;
+
+			if (isset($response['id'])) {
+				$this->_lastID = $response['id'];
+			}
 		} else {
 			$this->_lastID = null;
 		}

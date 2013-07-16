@@ -11,6 +11,7 @@ use Titon\Model\Driver\Dialect\AbstractDialect;
 use Titon\Model\Exception\UnsupportedFeatureException;
 use Titon\Model\Query;
 use Titon\Model\Query\Expr;
+use Titon\Model\Query\Func;
 use Titon\Model\Query\Predicate;
 use Titon\Model\Query\SubQuery;
 use Titon\Utility\Hash;
@@ -264,7 +265,10 @@ class MongoDialect extends AbstractDialect {
 	 * @return array
 	 */
 	public function executeDropTable(MongoCollection $collection, Query $query) {
-		return $collection->drop();
+		$response = $collection->drop();
+		$response['params'] = [];
+
+		return $response;
 	}
 
 	/**
@@ -303,6 +307,10 @@ class MongoDialect extends AbstractDialect {
 		$response['params'] = [
 			'values' => $values
 		];
+
+		if ($response['ok']) {
+			$response['n'] = count($values);
+		}
 
 		return $response;
 	}
@@ -464,9 +472,17 @@ class MongoDialect extends AbstractDialect {
 				$fields = $query->getFields();
 
 				if ($fields) {
-					$fields = array_map(function() {
-						return 1;
-					}, array_flip($fields));
+					$clean = [];
+
+					foreach ($fields as $field) {
+						if ($field instanceof Func) {
+							continue;
+						} else {
+							$clean[$field] = 1;
+						}
+					}
+
+					$fields = $clean;
 
 					if (isset($fields['id'])) {
 						$fields['_id'] = $fields['id'];

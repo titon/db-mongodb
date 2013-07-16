@@ -54,7 +54,7 @@ class MongoResult extends AbstractResult {
 			$this->_executed = isset($response['ok']);
 			$this->_success = $this->hasExecuted() ? (bool) $response['ok'] : false;
 
-			if (in_array($query->getType(), [Query::UPDATE, Query::INSERT, Query::DELETE])) {
+			if (in_array($query->getType(), [Query::UPDATE, Query::INSERT, Query::DELETE, Query::MULTI_INSERT])) {
 				$this->_count = isset($response['n']) ? (int) $response['n'] : 0;
 			} else {
 				$this->_count = 1;
@@ -128,46 +128,65 @@ class MongoResult extends AbstractResult {
 	public function getStatement() {
 		$query = $this->getQuery();
 		$params = $this->getParams();
-		$attributes = json_encode($query->getAttributes());
+		$attributes = $query->getAttributes();
 		$statement = 'db.' . $params['ns'] . '.';
+
+		// Flag count
+		$isCount = isset($attributes['count']);
+		unset($attributes['count']);
+
+		$attributes = json_encode($attributes);
 
 		switch ($query->getType()) {
 			case Query::INSERT:
-				$statement .= sprintf('insert(%s, %s);', json_encode($params['values']), $attributes);
+				unset($params['values']['_id']);
+				$statement .= sprintf('insert(%s, %s)', json_encode($params['values']), $attributes);
 			break;
 			case Query::MULTI_INSERT:
-				$statement .= sprintf('batchInsert(%s, %s);', json_encode($params['values']), $attributes);
+				$statement .= sprintf('batchInsert(%s, %s)', json_encode($params['values']), $attributes);
 			break;
 			case Query::SELECT:
-				$statement .= sprintf('find(%s, %s);', json_encode($params['query']), json_encode($params['fields']));
+				$statement .= sprintf('find(%s, %s)', json_encode($params['query']), json_encode($params['fields']));
+
+				if ($limit = $query->getLimit()) {
+					$statement .= sprintf('.limit(%s)', $limit);
+				}
+
+				if ($offset = $query->getOffset()) {
+					$statement .= sprintf('.skip(%s)', $offset);
+				}
+
+				if ($isCount) {
+					$statement .= '.count()';
+				}
 			break;
 			case Query::UPDATE:
-				$statement .= sprintf('update(%s, %s, %s);', json_encode($params['where']), json_encode($params['fields']), $attributes);
+				$statement .= sprintf('update(%s, %s, %s)', json_encode($params['where']), json_encode($params['fields']), $attributes);
 			break;
 			case Query::DELETE:
-				$statement .= sprintf('remove(%s, %s);', json_encode($params['where']), $attributes);
+				$statement .= sprintf('remove(%s, %s)', json_encode($params['where']), $attributes);
 			break;
 			case Query::TRUNCATE:
-				$statement .= sprintf('remove([], %s); (truncate)', $attributes);
+				$statement .= sprintf('remove([], %s)', $attributes);
 			break;
 			case Query::CREATE_TABLE:
-				$statement = sprintf('db.createCollection(%s, %s);', json_encode($params['name']), $attributes);
+				$statement = sprintf('db.createCollection(%s, %s)', json_encode($params['name']), $attributes);
 			break;
 			case Query::CREATE_INDEX:
-				$statement .= sprintf('ensureIndex(%s, %s);', json_encode($params['fields']), $attributes);
+				$statement .= sprintf('ensureIndex(%s, %s)', json_encode($params['fields']), $attributes);
 			break;
 			case Query::DROP_TABLE:
-				$statement .= 'drop();';
+				$statement .= 'drop()';
 			break;
 			case Query::DROP_INDEX:
-				$statement .= sprintf('deleteIndex(%s);', json_encode($params['fields']));
+				$statement .= sprintf('deleteIndex(%s)', json_encode($params['fields']));
 			break;
 			default:
 				$statement = '(unknown statement)';
 			break;
 		}
 
-		return $statement;
+		return $statement . ';';
 	}
 
 	/**
