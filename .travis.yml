@@ -9,8 +9,7 @@ services:
 
 before_script:
   #- mongo titon_test --eval 'db.addUser("mongo", "test");'
-  - pecl upgrade mongo
-  - pecl install mongoclient
+  - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - composer selfupdate
   - composer install
 
