@@ -15,9 +15,18 @@ namespace Titon\Model\Mongo;
 class Query extends \Titon\Model\Query {
 
 	/**
+	 * Used to track count() queries.
+	 *
+	 * @type boolean
+	 */
+	public $isCount;
+
+	/**
 	 * {@inheritdoc}
 	 */
 	public function count() {
+		$this->isCount = true;
+
 		return $this->getModel()->count($this);
 	}
 

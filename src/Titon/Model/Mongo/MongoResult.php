@@ -182,10 +182,9 @@ class MongoResult extends AbstractResult {
 					$statement .= sprintf('.skip(%s)', $offset);
 				}
 
-				/* TODO
-				if ($isCount) {
+				if (!empty($query->isCount)) {
 					$statement .= '.count()';
-				}*/
+				}
 			break;
 
 			case Query::UPDATE:
