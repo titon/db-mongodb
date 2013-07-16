@@ -8,6 +8,7 @@
 namespace Titon\Model\Mongo;
 
 use Titon\Model\Driver\Dialect\AbstractDialect;
+use Titon\Model\Exception\InvalidQueryException;
 use Titon\Model\Exception\UnsupportedFeatureException;
 use Titon\Model\Query;
 use Titon\Model\Query\Expr;
@@ -310,7 +311,12 @@ class MongoDialect extends AbstractDialect {
 		$where = $this->formatWhere($query->getWhere());
 		$fields = $this->formatFields($query);
 
-		$response = $collection->update($where, $fields, $query->getAttributes() + ['w' => 1, 'upsert' => true, 'multiple' => true]);
+		$query->attribute([
+			'upsert' => false,
+			'multiple' => ($query->getLimit() != 1) // multiple in PHP, multi in Mongo
+		]);
+
+		$response = $collection->update($where, $fields, $query->getAttributes() + ['w' => 1]);
 		$response['params'] = [
 			'where' => $where,
 			'fields' => $fields
@@ -396,26 +402,31 @@ class MongoDialect extends AbstractDialect {
 			break;
 
 			case Query::UPDATE:
-				$fields = [];
+				$fields = $query->getFields();
+				$clean = [];
 				$set = [];
 
-				foreach ($query->getFields() as $field => $value) {
+				if (empty($fields)) {
+					throw new InvalidQueryException('Missing field data for update query');
+				}
+
+				foreach ($fields as $field => $value) {
 					if (substr($field, 0, 1) === '$') {
-						$fields[$field] = $value;
+						$clean[$field] = $value;
 					} else {
 						$set[$field] = $value;
 					}
 				}
 
 				if ($set) {
-					if (isset($fields['$set'])) {
-						$fields['$set'] = array_merge($fields['$set'], $set);
+					if (isset($clean['$set'])) {
+						$clean['$set'] = array_merge($clean['$set'], $set);
 					} else {
-						$fields['$set'] = $set;
+						$clean['$set'] = $set;
 					}
 				}
 
-				return $fields;
+				return $clean;
 			break;
 
 			case Query::SELECT:

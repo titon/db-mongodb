@@ -17,8 +17,6 @@ if (!file_exists(VENDOR_DIR . '/autoload.php')) {
 
 $loader = require VENDOR_DIR . '/autoload.php';
 $loader->add('Titon\\Model\\Mongo', TEST_DIR);
-$loader->add('Titon\\Model\\Data', VENDOR_DIR . '/titon/model/tests');
-$loader->add('Titon\\Model\\Driver', VENDOR_DIR . '/titon/model/tests');
 
 // Define database credentials
 $db = [

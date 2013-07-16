@@ -7,11 +7,15 @@
 
 namespace Titon\Model\Mongo;
 
-use Titon\Model\Data\AbstractCallbackTest;
+use Titon\Test\TestCase;
 
 /**
  * Test class for model callbacks.
  */
-class CallbackTest extends AbstractCallbackTest {
+class CallbackTest extends TestCase {
+
+	public function testToDo() {
+		$this->markTestSkipped('Need to implement callback tests');
+	}
 
 }

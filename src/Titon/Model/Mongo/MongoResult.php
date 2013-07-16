@@ -131,17 +131,22 @@ class MongoResult extends AbstractResult {
 	public function getStatement() {
 		$query = $this->getQuery();
 		$params = $this->getParams();
-		$attributes = json_encode($query->getAttributes());
+		$attributes = $query->getAttributes();
 		$statement = 'db.' . $params['ns'] . '.';
 
 		switch ($query->getType()) {
 			case Query::INSERT:
 				unset($params['values']['_id']);
-				$statement .= sprintf('insert(%s, %s)', json_encode($params['values']), $attributes);
+				$statement .= sprintf('insert(%s)', json_encode($params['values']));
 			break;
+
 			case Query::MULTI_INSERT:
-				$statement .= sprintf('batchInsert(%s, %s)', json_encode($params['values']), $attributes);
+				$statement .= sprintf('insert(%s)', json_encode(array_map(function($value) {
+					unset($value['_id']);
+					return $value;
+				}, $params['values'])));
 			break;
+
 			case Query::SELECT:
 				$where = [];
 				$order = [];
@@ -182,27 +187,35 @@ class MongoResult extends AbstractResult {
 					$statement .= '.count()';
 				}*/
 			break;
+
 			case Query::UPDATE:
-				$statement .= sprintf('update(%s, %s, %s)', json_encode($params['where']), json_encode($params['fields']), $attributes);
+				$statement .= sprintf('update(%s, %s, %s)', json_encode($params['where']), json_encode($params['fields']), json_encode($attributes));
 			break;
+
 			case Query::DELETE:
-				$statement .= sprintf('remove(%s, %s)', json_encode($params['where']), $attributes);
+				$statement .= sprintf('remove(%s, %s)', json_encode($params['where']), empty($attributes['justOne']) ? 'false' : 'true');
 			break;
+
 			case Query::TRUNCATE:
-				$statement .= sprintf('remove([], %s)', $attributes);
+				$statement .= 'remove()';
 			break;
+
 			case Query::CREATE_TABLE:
-				$statement = sprintf('db.createCollection(%s, %s)', json_encode($params['name']), $attributes);
+				$statement = sprintf('db.createCollection(%s, %s)', json_encode($params['name']), json_encode($attributes));
 			break;
+
 			case Query::CREATE_INDEX:
-				$statement .= sprintf('ensureIndex(%s, %s)', json_encode($params['fields']), $attributes);
+				$statement .= sprintf('ensureIndex(%s, %s)', json_encode($params['fields']), json_encode($attributes));
 			break;
+
 			case Query::DROP_TABLE:
 				$statement .= 'drop()';
 			break;
+
 			case Query::DROP_INDEX:
 				$statement .= sprintf('deleteIndex(%s)', json_encode($params['fields']));
 			break;
+
 			default:
 				$statement = '(unknown statement)';
 			break;
