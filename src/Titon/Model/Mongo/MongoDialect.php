@@ -18,6 +18,7 @@ use Titon\Model\Query\SubQuery;
 use Titon\Utility\Hash;
 use \MongoCollection;
 use \MongoCode;
+use \MongoId;
 use \MongoDB;
 use \MongoRegex;
 use \Closure;
@@ -367,9 +368,14 @@ class MongoDialect extends AbstractDialect {
 		$operator = $expr->getOperator();
 		$value = $expr->getValue();
 
+		// Auto-wrap ID fields
+		if ($field === '_id' && !($value instanceof MongoId)) {
+			$value = new MongoId($value);
+		}
+
 		switch ($operator) {
 			case '=':
-			case self::NULL:
+			case self::IS_NULL:
 				// Do nothing
 			break;
 			case self::BETWEEN:

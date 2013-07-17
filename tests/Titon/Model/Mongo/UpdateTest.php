@@ -361,4 +361,24 @@ class UpdateTest extends TestCase {
 		], $actual['spells']);
 	}
 
+	/**
+	 * Test _id is auto wrapped with MongoId.
+	 */
+	public function testIdWrap() {
+		$this->loadFixtures('Stats');
+
+		$stat = new Stat();
+
+		$record = $stat->select('_id')->fetch(false);
+		$id = $record['_id'];
+
+		// Via object
+		$stat->update($id, ['name' => 'Paladin']);
+		$this->assertEquals(['name' => 'Paladin'], $stat->select('name')->fetch(false));
+
+		// Via string (should auto wrap)
+		$stat->update((string) $id, ['name' => 'Knight']);
+		$this->assertEquals(['name' => 'Knight'], $stat->select('name')->fetch(false));
+	}
+
 }
