@@ -11,6 +11,7 @@ use Titon\Model\Driver\AbstractDriver;
 use Titon\Model\Exception\InvalidQueryException;
 use Titon\Model\Exception\UnsupportedQueryStatementException;
 use Titon\Model\Model;
+use Titon\Model\Mongo\Exception\MissingServersException;
 use Titon\Model\Query;
 use \MongoClient;
 
@@ -25,10 +26,17 @@ class MongoDriver extends AbstractDriver {
 
 	/**
 	 * Configuration.
+	 *
+	 * @type array {
+	 * 		@type array $servers		List of servers to connect to or to use in a replica set
+	 * 		@type string $replicaSet	Name of the replica set instance
+	 * }
 	 */
 	protected $_config = [
 		'host' => MongoClient::DEFAULT_HOST,
 		'port' => MongoClient::DEFAULT_PORT,
+		'servers' => [],
+		'replicaSet' => '',
 		'flags' => [
 			'connect' => true,
 			'w' => 1
@@ -60,29 +68,36 @@ class MongoDriver extends AbstractDriver {
 	 * Connect to the Mongo database.
 	 *
 	 * @return bool
+	 * @throws \Titon\Model\Mongo\Exception\MissingServersException
 	 */
 	public function connect() {
 		if ($this->isConnected()) {
 			return true;
 		}
 
-		$server = 'mongodb://';
+		$options = [];
 
-		if ($socket = $this->getSocket()) {
-			$server .= $socket;
-		} else {
-			if ($user = $this->getUser()) {
-				$server .= $user . ':' . $this->getPassword() . '@';
-			}
-
-			$server .= $this->getHost() . ':' . $this->getPort();
-
-			if ($db = $this->getDatabase()) {
-				$server .= '/' . $db;
-			}
+		if ($db = $this->getDatabase()) {
+			$options['db'] = $db;
 		}
 
-		$this->_connection = new MongoClient($server, $this->config->flags);
+		if ($user = $this->getUser()) {
+			$options['username'] = $user;
+		}
+
+		if ($pass = $this->getPassword()) {
+			$options['password'] = $pass;
+		}
+
+		if ($rSet = $this->config->replicaSet) {
+			if (empty($this->config->servers)) {
+				throw new MissingServersException('A list of servers is required for replica set functionality');
+			}
+
+			$options['replicaSet'] = $rSet;
+		}
+
+		$this->_connection = new MongoClient($this->getServer(), $options + $this->config->flags);
 		$this->_connected = $this->_connection->connected;
 
 		return $this->_connected;
@@ -120,6 +135,28 @@ class MongoDriver extends AbstractDriver {
 	 */
 	public function getLastInsertID(Model $model) {
 		return $this->_lastID;
+	}
+
+	/**
+	 * Build and return the server connection.
+	 *
+	 * @return string
+	 */
+	public function getServer() {
+		$server = 'mongodb://';
+
+		if ($servers = $this->config->servers) {
+			$server .= implode(',', $servers);
+
+		} else {
+			if ($socket = $this->getSocket()) {
+				$server .= $socket;
+			} else {
+				$server .= $this->getHost() . ':' . $this->getPort();
+			}
+		}
+
+		return $server;
 	}
 
 	/**

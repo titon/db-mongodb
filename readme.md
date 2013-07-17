@@ -14,5 +14,4 @@ Provides MongoDB access for the Titon Model package.
 ### To DO ###
 
 * Relational tests
-* Replica set support
-* ID checks
+* Callback tests
