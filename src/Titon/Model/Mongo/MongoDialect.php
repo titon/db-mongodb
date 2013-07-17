@@ -17,6 +17,7 @@ use Titon\Model\Query\Predicate;
 use Titon\Model\Query\SubQuery;
 use Titon\Utility\Hash;
 use \MongoCollection;
+use \MongoCode;
 use \MongoDB;
 use \MongoRegex;
 use \Closure;
@@ -42,6 +43,26 @@ class MongoDialect extends AbstractDialect {
 	const SIZE = 'size';
 	const TYPE = 'type';
 	const REMOVE = 'unset';
+
+	const TYPE_DOUBLE = 1;
+	const TYPE_STRING = 2;
+	const TYPE_OBJECT = 3;
+	const TYPE_ARRAY = 4;
+	const TYPE_BINARY = 5;
+	const TYPE_UNDEFINED = 6;
+	const TYPE_OBJECT_ID = 7;
+	const TYPE_BOOLEAN = 8;
+	const TYPE_DATE = 9;
+	const TYPE_NULL = 10;
+	const TYPE_REGEX = 11;
+	const TYPE_JAVASCRIPT = 12;
+	const TYPE_SYMBOL = 14;
+	const TYPE_JS_SCOPE = 15;
+	const TYPE_INT_32 = 16;
+	const TYPE_TIMESTAMP = 17;
+	const TYPE_INT_64 = 18;
+	const TYPE_MIN_KEY = 255;
+	const TYPE_MAX_KEY = 127;
 
 	/**
 	 * Configuration.
@@ -348,16 +369,16 @@ class MongoDialect extends AbstractDialect {
 
 		switch ($operator) {
 			case '=':
-			case Expr::NULL:
+			case self::NULL:
 				// Do nothing
 			break;
-			case Expr::BETWEEN:
+			case self::BETWEEN:
 				$value = [
 					$this->getClause('>=') => $value[0],
 					$this->getClause('<=') => $value[1]
 				];
 			break;
-			case Expr::NOT_BETWEEN:
+			case self::NOT_BETWEEN:
 				$value = [
 					[$field => [$this->getClause('<') => $value[0]]],
 					[$field => [$this->getClause('>') => $value[1]]]
@@ -365,11 +386,11 @@ class MongoDialect extends AbstractDialect {
 
 				return [$this->getClause(self::EITHER) => $value];
 			break;
-			case Expr::LIKE:
-			case Expr::REGEXP:
-			case Expr::RLIKE:
-			case Expr::NOT_LIKE:
-			case Expr::NOT_REGEXP:
+			case self::LIKE:
+			case self::REGEXP:
+			case self::RLIKE:
+			case self::NOT_LIKE:
+			case self::NOT_REGEXP:
 			case self::REGEX:
 			case '$regex':
 				if (!($value instanceof MongoRegex)) {
@@ -379,6 +400,18 @@ class MongoDialect extends AbstractDialect {
 				if ($operator === Expr::NOT_LIKE || $operator === Expr::NOT_REGEXP) {
 					$value = [$this->getClause(self::NOT) => $value];
 				}
+			break;
+			case self::WHERE:
+			case '$where':
+				if (is_string($value)) {
+					$value = new MongoCode($value);
+				}
+
+				if (!($value instanceof MongoCode)) {
+					throw new InvalidQueryException('When using $where the value must be an instance of MongoCode');
+				}
+
+				return [$this->getClause(self::WHERE) => $value];
 			break;
 			default:
 				if (substr($operator, 0, 1) !== '$') {

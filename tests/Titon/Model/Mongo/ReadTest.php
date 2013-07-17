@@ -14,6 +14,7 @@ use Titon\Test\Stub\Model\Stat;
 use Titon\Test\Stub\Model\User;
 use Titon\Test\TestCase;
 use \Exception;
+use \MongoCode;
 
 /**
  * Test class for database reading.
@@ -43,7 +44,7 @@ class ReadTest extends TestCase {
 			'name' => 'A Game of Thrones',
 			'isbn' => '0-553-10354-7',
 			'released' => '1996-08-02'
-		], $this->removeIDs($book->select()->fetch(false)));
+		], $book->select('series_id', 'name', 'isbn', 'released')->fetch(false));
 
 		// Multiple
 		$this->assertEquals([
@@ -65,7 +66,7 @@ class ReadTest extends TestCase {
 				'isbn' => '',
 				'released' => '1955-10-25'
 			],
-		], $this->removeIDs($book->select()->where('series_id', 3)->orderBy('id', 'asc')->fetchAll(false)));
+		], $book->select('series_id', 'name', 'isbn', 'released')->where('series_id', 3)->orderBy('_id', 'asc')->fetchAll(false));
 	}
 
 	/**
@@ -406,28 +407,152 @@ class ReadTest extends TestCase {
 	}
 
 	/**
-	 * Remove _id from results since we cant match against it.
-	 *
-	 * @param array $data
-	 * @return array
+	 * Test = and $ne operator.
 	 */
-	protected function removeIDs($data) {
-		$isSingle = false;
+	public function testOpEq() {
+		$this->loadFixtures('Stats');
 
-		if (!isset($data[0])) {
-			$data = array($data);
-			$isSingle = true;
+		$stat = new Stat();
+
+		$this->assertEquals([
+			['name' => 'Warrior']
+		], $stat->select('name')->where('range', 1.0)->fetchAll(false));
+
+		$this->assertEquals([
+			['name' => 'Ranger'],
+			['name' => 'Mage'],
+		], $stat->select('name')->where('range', '!=', 1.0)->fetchAll(false));
+	}
+
+	/**
+	 * Test $all operator.
+	 */
+	public function testOpAll() {
+		$this->loadFixtures('Stats');
+
+	}
+
+	/**
+	 * Test $gt and $gte operator.
+	 */
+	public function testOpGt() {
+		$this->loadFixtures('Stats');
+
+		$stat = new Stat();
+
+		$this->assertEquals([
+			['name' => 'Warrior']
+		], $stat->select('name')->where('health', '>', 800)->fetchAll(false));
+
+		$this->assertEquals([
+			['name' => 'Warrior'],
+			['name' => 'Ranger'],
+		], $stat->select('name')->where('health', '>=', 800)->fetchAll(false));
+	}
+
+	/**
+	 * Test $lt and $lte operator.
+	 */
+	public function testOpLt() {
+		$this->loadFixtures('Stats');
+
+		$stat = new Stat();
+
+		$this->assertEquals([
+			['name' => 'Mage']
+		], $stat->select('name')->where('health', '<', 800)->fetchAll(false));
+
+		$this->assertEquals([
+			['name' => 'Ranger'],
+			['name' => 'Mage'],
+		], $stat->select('name')->where('health', '<=', 800)->fetchAll(false));
+	}
+
+	/**
+	 * Test $in and $nin operator.
+	 */
+	public function testOpIn() {
+		$this->loadFixtures('Stats');
+
+		$stat = new Stat();
+
+		$this->assertEquals([
+			['name' => 'Warrior']
+		], $stat->select('name')->where('range', 'in', [1, 2, 3])->fetchAll(false));
+
+		$this->assertEquals([
+			['name' => 'Ranger'],
+			['name' => 'Mage'],
+		], $stat->select('name')->where('range', 'notIn', [1, 2, 3])->fetchAll(false));
+	}
+
+	/**
+	 * Test $exists operator.
+	 */
+	public function testOpExists() {
+		$this->loadFixtures('Stats');
+
+		$stat = new Stat();
+		$stat->create(['name' => 'Necromancer']);
+
+		$this->assertEquals([
+			['name' => 'Warrior'],
+			['name' => 'Ranger'],
+			['name' => 'Mage'],
+		], $stat->select('name')->where('range', 'exists', true)->fetchAll(false));
+
+		$this->assertEquals([
+			['name' => 'Necromancer'],
+		], $stat->select('name')->where('range', 'exists', false)->fetchAll(false));
+	}
+
+	/**
+	 * Test $type and $not operator.
+	 */
+	public function testOpTypeAndNot() {
+		$this->loadFixtures('Stats');
+
+		$stat = new Stat();
+		$stat->create(['name' => 'Necromancer', 'isMelee' => 'N/A']);
+
+		$this->assertEquals([
+			['name' => 'Warrior'],
+			['name' => 'Ranger'],
+			['name' => 'Mage'],
+		], $stat->select('name')->where('isMelee', 'type', MongoDialect::TYPE_BOOLEAN)->fetchAll(false));
+
+		$this->assertEquals([
+			['name' => 'Necromancer'],
+		], $stat->select('name')->where('isMelee', 'not', ['$type' => MongoDialect::TYPE_BOOLEAN])->fetchAll(false));
+	}
+
+	/**
+	 * Test $exists operator.
+	 */
+	public function testOpWhere() {
+		$this->loadFixtures('Stats');
+
+		$stat = new Stat();
+
+		$this->assertEquals([
+			['name' => 'Warrior']
+		], $stat->select('name')->where('isMelee', 'where', 'function() { return (this.isMelee == true); }')->fetchAll(false));
+
+		$this->assertEquals([
+			['name' => 'Ranger'],
+			['name' => 'Mage'],
+		], $stat->select('name')->where('damage', 'where', new MongoCode('function() { return (this.damage > min && this.damage < max); }', ['min' => 50, 'max' => 100]))->fetchAll(false));
+
+		// Not MongoCode
+		try {
+			$this->assertEquals([
+				['name' => 'Warrior']
+			], $stat->select('name')->where('isMelee', 'where', 123456)->fetchAll(false));
+
+			$this->assertTrue(false);
+		} catch (Exception $e) {
+			$this->assertTrue(true);
 		}
-
-		foreach ($data as &$row) {
-			unset($row['_id']);
-		}
-
-		if ($isSingle) {
-			return $data[0];
-		}
-
-		return $data;
 	}
 
 }
