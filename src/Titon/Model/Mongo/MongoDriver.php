@@ -201,6 +201,7 @@ class MongoDriver extends AbstractDriver {
 	/**
 	 * {@inheritdoc}
 	 *
+	 * @param array|\Titon\Model\Query $query
 	 * @throws \Titon\Model\Exception\InvalidQueryException
 	 */
 	public function query($query, array $params = []) {
@@ -213,8 +214,8 @@ class MongoDriver extends AbstractDriver {
 			$cacheKey = $query->getCacheKey();
 			$cacheLength = $query->getCacheLength();
 
-		} else {
-			throw new InvalidQueryException('Query must be a Titon\Model\Query instance');
+		} else if (!is_array($query)) {
+			throw new InvalidQueryException('Query must be a command array or a Titon\Model\Query instance');
 		}
 
 		// Use the storage engine first
@@ -234,18 +235,25 @@ class MongoDriver extends AbstractDriver {
 		$dialect = $this->getDialect();
 		$startTime = microtime();
 
-		if ($query->getType() === Query::CREATE_TABLE) {
-			$response = $dialect->executeCreateTable($db, $query);
+		// Direct query command
+		if (is_array($query)) {
+			$response = $db->command($query, $params);
 
+		// Using query object
 		} else {
-			$type = $query->getType();
-			$method = 'execute' . ucfirst($type);
+			if ($query->getType() === Query::CREATE_TABLE) {
+				$response = $dialect->executeCreateTable($db, $query);
 
-			if (!method_exists($dialect, $method)) {
-				throw new UnsupportedQueryStatementException(sprintf('Query statement %s does not exist or has not been implemented', $type));
+			} else {
+				$type = $query->getType();
+				$method = 'execute' . ucfirst($type);
+
+				if (!method_exists($dialect, $method)) {
+					throw new UnsupportedQueryStatementException(sprintf('Query statement %s does not exist or has not been implemented', $type));
+				}
+
+				$response = call_user_func_array([$dialect, $method], [$db->selectCollection($query->getTable()), $query]);
 			}
-
-			$response = call_user_func_array([$dialect, $method], [$db->selectCollection($query->getTable()), $query]);
 		}
 
 		// Gather and log result
@@ -259,7 +267,13 @@ class MongoDriver extends AbstractDriver {
 			$this->_lastID = null;
 		}
 
-		$this->_result = new MongoResult($response, $query);
+		if (is_array($query)) {
+			$response['command'] = $query;
+
+			$this->_result = new MongoResult($response);
+		} else {
+			$this->_result = new MongoResult($response, $query);
+		}
 
 		$this->logQuery($this->_result);
 

@@ -19,6 +19,13 @@ use \MongoCursor;
 class MongoResult extends AbstractResult {
 
 	/**
+	 * Direct query command.
+	 *
+	 * @type array
+	 */
+	protected $_command;
+
+	/**
 	 * Cursor returned from select statements.
 	 *
 	 * @type \MongoCursor
@@ -38,7 +45,7 @@ class MongoResult extends AbstractResult {
 	 * @param \MongoCursor|array $response
 	 * @param \Titon\Model\Query $query
 	 */
-	public function __construct($response, Query $query) {
+	public function __construct($response, Query $query = null) {
 		parent::__construct($query);
 
 		if ($response instanceof MongoCursor) {
@@ -48,13 +55,30 @@ class MongoResult extends AbstractResult {
 			if ($explain = $response->explain()) {
 				$this->_time = $explain['millis'];
 			}
+
 		} else {
+			$params = [];
+
+			if (isset($response['params'])) {
+				$params = $response['params'];
+				unset($response['params']);
+			}
+
+			if ($query) {
+				$params['ns'] = $query->getTable();
+			}
+
+			if (isset($response['command'])) {
+				$this->_command = $response['command'];
+				unset($response['command']);
+			}
+
 			$this->_response = $response;
-			$this->_params = $response['params'] + ['ns' => $query->getTable()];
+			$this->_params = $params;
 			$this->_executed = isset($response['ok']);
 			$this->_success = $this->hasExecuted() ? (bool) $response['ok'] : false;
 
-			if (in_array($query->getType(), [Query::UPDATE, Query::INSERT, Query::DELETE, Query::MULTI_INSERT])) {
+			if (!$query || in_array($query->getType(), [Query::UPDATE, Query::INSERT, Query::DELETE, Query::MULTI_INSERT])) {
 				$this->_count = isset($response['n']) ? (int) $response['n'] : 0;
 			} else {
 				$this->_count = 1;
@@ -77,6 +101,9 @@ class MongoResult extends AbstractResult {
 	public function count() {
 		if ($this->_cursor) {
 			return $this->_cursor->count();
+
+		} else if (isset($this->_response['n'])) {
+			return $this->_response['n'];
 		}
 
 		return 0;
@@ -109,6 +136,12 @@ class MongoResult extends AbstractResult {
 	public function fetchAll() {
 		if (isset($this->_response['retval'])) {
 			return $this->_response['retval'];
+
+		} else if (isset($this->_response['results'])) {
+			return $this->_response['results'];
+
+		} else if (isset($this->_response['values'])) {
+			return $this->_response['values'];
 		}
 
 		$cursor = $this->_cursor;
@@ -126,13 +159,37 @@ class MongoResult extends AbstractResult {
 	}
 
 	/**
+	 * Return the database command array.
+	 *
+	 * @return array
+	 */
+	public function getCommand() {
+		return $this->_command;
+	}
+
+	/**
+	 * Return the query response array.
+	 *
+	 * @return array
+	 */
+	public function getResponse() {
+		return $this->_response;
+	}
+
+	/**
 	 * {@inheritdoc}
 	 */
 	public function getStatement() {
 		$query = $this->getQuery();
 		$params = $this->getParams();
-		$attributes = $query->getAttributes();
+
+		// Command query
+		if ($command = $this->getCommand()) {
+			return sprintf('db.runCommand(%s);', json_encode($command));
+		}
+
 		$statement = 'db.' . $params['ns'] . '.';
+		$attributes = $query->getAttributes();
 
 		switch ($query->getType()) {
 			case Query::INSERT:

@@ -29,6 +29,15 @@ class DriverTest extends TestCase {
 	}
 
 	/**
+	 * Unload fixtures.
+	 */
+	protected function tearDown() {
+		parent::tearDown();
+
+		$this->unloadFixtures();
+	}
+
+	/**
 	 * Test exceptions are thrown if no servers defined.
 	 */
 	public function testReplicaSet() {
@@ -53,6 +62,24 @@ class DriverTest extends TestCase {
 
 		$this->object->config->servers = ['domain.com:27017', 'localhost:27017'];
 		$this->assertEquals('mongodb://domain.com:27017,localhost:27017', $this->object->getServer());
+	}
+
+	/**
+	 * Test DB commands.
+	 */
+	public function testCommandQuery() {
+		$this->object->connect();
+		$this->loadFixtures('Users');
+
+		$this->assertEquals(5, $this->object->query(['count' => 'users'])->count());
+
+		$this->assertEquals([
+			'miles',
+			'batman',
+			'superman',
+			'spiderman',
+			'wolverine'
+		], $this->object->query(['distinct' => 'users', 'key' => 'username'])->fetchAll(false));
 	}
 
 }
