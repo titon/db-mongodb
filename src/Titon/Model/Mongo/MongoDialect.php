@@ -369,7 +369,7 @@ class MongoDialect extends AbstractDialect {
 		$value = $expr->getValue();
 
 		// Auto-wrap ID fields
-		if ($field === '_id' && !($value instanceof MongoId)) {
+		if ($field === '_id' && !in_array($operator, ['$in', '$nin', 'in', 'notIn']) && !($value instanceof MongoId)) {
 			$value = new MongoId($value);
 		}
 

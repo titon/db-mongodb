@@ -10,8 +10,3 @@ Provides MongoDB access for the Titon Model package.
 
 * PHP 5.4.0
 	* mongo
-
-### To DO ###
-
-* Relational tests
-* Callback tests
