@@ -20,6 +20,15 @@ use Titon\Utility\Hash;
 class Model extends \Titon\Model\Model {
 
 	/**
+	 * Configuration.
+	 *
+	 * @type array
+	 */
+	protected $_config = [
+		'entity' => 'Titon\Model\Mongo\Document'
+	];
+
+	/**
 	 * {@inheritdoc}
 	 */
 	public function fetchList(Query $query, $key = null, $value = null, array $options = []) {
