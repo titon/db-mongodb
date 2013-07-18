@@ -81,24 +81,32 @@ class MongoDialect extends AbstractDialect {
 		self::ALL			=> '$all',
 		self::ALSO			=> '$and',
 		self::BIT			=> '$bit',
+		self::BETWEEN		=> '$between',
 		self::EITHER		=> '$or',
 		self::EXISTS		=> '$exists',
 		self::IN			=> '$in',
 		self::INC			=> '$inc',
+		self::IS_NULL		=> '$eq',
 		self::IS_NOT_NULL	=> '$ne',
 		self::ISOLATED		=> '$isolated',
+		self::LIKE			=> '$regex',
 		self::NOR			=> '$nor',
 		self::NOT			=> '$not',
+		self::NOT_BETWEEN	=> '$nbetween',
 		self::NOT_IN		=> '$nin',
+		self::NOT_LIKE		=> '$nregex',
+		self::NOT_REGEXP	=> '$nregex',
 		self::REGEX			=> '$regex',
 		self::REGEXP		=> '$regex',
 		self::REMOVE		=> '$unset',
 		self::RENAME		=> '$rename',
+		self::RLIKE			=> '$regex',
 		self::SET			=> '$set',
 		self::SET_ON_INSERT => '$setOnInsert',
 		self::SIZE			=> '$size',
 		self::TYPE			=> '$type',
 		self::WHERE			=> '$where',
+		'='					=> '$eq',
 		'>'					=> '$gt',
 		'>='				=> '$gte',
 		'<'					=> '$lt',
@@ -368,46 +376,44 @@ class MongoDialect extends AbstractDialect {
 		$operator = $expr->getOperator();
 		$value = $expr->getValue();
 
+		// Convert to Mongo operators
+		if (substr($operator, 0, 1) !== '$') {
+			$operator = $this->getClause($operator);
+		}
+
 		// Auto-wrap ID fields
-		if ($field === '_id' && !in_array($operator, ['$in', '$nin', 'in', 'notIn']) && !($value instanceof MongoId)) {
+		if ($field === '_id' && !in_array($operator, ['$in', '$nin']) && !($value instanceof MongoId)) {
 			$value = new MongoId($value);
 		}
 
 		switch ($operator) {
-			case '=':
-			case self::IS_NULL:
+			case '$eq':
 				// Do nothing
 			break;
-			case self::BETWEEN:
+			case '$between':
 				$value = [
-					$this->getClause('>=') => $value[0],
-					$this->getClause('<=') => $value[1]
+					'$gte' => $value[0],
+					'$lte' => $value[1]
 				];
 			break;
-			case self::NOT_BETWEEN:
+			case '$nbetween':
 				$value = [
-					[$field => [$this->getClause('<') => $value[0]]],
-					[$field => [$this->getClause('>') => $value[1]]]
+					[$field => ['$lt' => $value[0]]],
+					[$field => ['$gt' => $value[1]]]
 				];
 
-				return [$this->getClause(self::EITHER) => $value];
+				return ['$or' => $value];
 			break;
-			case self::LIKE:
-			case self::REGEXP:
-			case self::RLIKE:
-			case self::NOT_LIKE:
-			case self::NOT_REGEXP:
-			case self::REGEX:
 			case '$regex':
+			case '$nregex':
 				if (!($value instanceof MongoRegex)) {
 					$value = new MongoRegex($value);
 				}
 
-				if ($operator === Expr::NOT_LIKE || $operator === Expr::NOT_REGEXP) {
-					$value = [$this->getClause(self::NOT) => $value];
+				if ($operator === '$nregex') {
+					$value = ['$not' => $value];
 				}
 			break;
-			case self::WHERE:
 			case '$where':
 				if (is_string($value)) {
 					$value = new MongoCode($value);
@@ -417,13 +423,9 @@ class MongoDialect extends AbstractDialect {
 					throw new InvalidQueryException('When using $where the value must be an instance of MongoCode');
 				}
 
-				return [$this->getClause(self::WHERE) => $value];
+				return [$operator => $value];
 			break;
 			default:
-				if (substr($operator, 0, 1) !== '$') {
-					$operator = $this->getClause($operator);
-				}
-
 				$value = [$operator => $value];
 			break;
 		}
