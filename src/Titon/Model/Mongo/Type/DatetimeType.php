@@ -21,14 +21,25 @@ class DatetimeType extends DateType {
 	/**
 	 * {@inheritdoc}
 	 */
+	public function getDefaultOptions() {
+		return [];
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
 	public function getName() {
-		return self::INT . 64;
+		return self::DATETIME;
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
 	public function to($value) {
+		if ($value instanceof MongoDate) {
+			return $value;
+		}
+
 		return new MongoDate(Time::toUnix($value));
 	}
 

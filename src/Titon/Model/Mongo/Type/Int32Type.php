@@ -35,6 +35,10 @@ class Int32Type extends IntType {
 	 * {@inheritdoc}
 	 */
 	public function to($value) {
+		if ($value instanceof MongoInt32) {
+			return $value;
+		}
+
 		return new MongoInt32((string) $value);
 	}
 

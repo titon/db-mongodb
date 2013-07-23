@@ -8,7 +8,7 @@
 namespace Titon\Model\Mongo;
 
 use Titon\Model\Driver\Schema;
-use Titon\Model\Mongo\Query as MongoQuery;
+use Titon\Model\Mongo\MongoQuery;
 use Titon\Model\Query;
 use Titon\Utility\Hash;
 
@@ -82,6 +82,23 @@ class Model extends \Titon\Model\Model {
 		$query->from($this->getTable(), $this->getAlias());
 
 		return $query;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function _filterData(array &$data) {
+		$aliases = array_keys($this->getRelations());
+		$related = [];
+
+		foreach ($aliases as $alias) {
+			if (isset($data[$alias])) {
+				$related[$alias] = $data[$alias];
+				unset($data[$alias]);
+			}
+		}
+
+		return $related;
 	}
 
 }

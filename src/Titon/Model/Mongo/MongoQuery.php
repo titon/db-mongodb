@@ -7,12 +7,14 @@
 
 namespace Titon\Model\Mongo;
 
+use Titon\Model\Query;
+
 /**
  * A query builder specific to MongoDB.
  *
  * @package Titon\Model\Mongo
  */
-class Query extends \Titon\Model\Query {
+class MongoQuery extends Query {
 
 	/**
 	 * Used to track count() queries.

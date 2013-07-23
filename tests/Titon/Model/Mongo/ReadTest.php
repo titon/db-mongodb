@@ -8,6 +8,7 @@
 namespace Titon\Model\Mongo;
 
 use Titon\Model\Entity;
+use Titon\Model\Query;
 use Titon\Test\Stub\Model\Book;
 use Titon\Test\Stub\Model\Genre;
 use Titon\Test\Stub\Model\Stat;

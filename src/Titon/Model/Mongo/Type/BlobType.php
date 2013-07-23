@@ -28,7 +28,7 @@ class BlobType extends LobType {
 	 * {@inheritdoc}
 	 */
 	public function getName() {
-		return self::INT . 64;
+		return self::BLOB;
 	}
 
 	/**
@@ -37,9 +37,12 @@ class BlobType extends LobType {
 	public function to($value) {
 		if (is_resource($value)) {
 			$value = stream_get_contents($value);
+
+		} else if ($value instanceof MongoBinData) {
+			return $value;
 		}
 
-		return new MongoBinData($value);
+		return new MongoBinData($value, 2);
 	}
 
 }

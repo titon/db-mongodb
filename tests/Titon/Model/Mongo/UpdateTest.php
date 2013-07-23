@@ -7,6 +7,7 @@
 
 namespace Titon\Model\Mongo;
 
+use Titon\Model\Query;
 use Titon\Test\Stub\Model\Stat;
 use Titon\Test\Stub\Model\User;
 use Titon\Test\TestCase;

@@ -7,6 +7,10 @@
 
 namespace Titon\Model\Mongo;
 
+use MongoBinData;
+use MongoDate;
+use Titon\Model\Query;
+use Titon\Test\Stub\Model\Mongo;
 use Titon\Test\Stub\Model\User;
 use Titon\Test\TestCase;
 
@@ -39,5 +43,50 @@ class MiscTest extends TestCase {
 		$this->assertEquals(0, $user->select()->count());
 	}
 
+	/**
+	 * Test type casting.
+	 */
+	public function testTypeCasting() {
+		$mongo = new Mongo();
+
+		// Create a record with every type
+		$id = $mongo->create([
+			'int' => 123456,
+			'int32' => 123456,
+			'int64' => 123456,
+			'string' => 'abc',
+			'array' => ['foo', 'bar'],
+			'object' => ['foo' => 'bar'],
+			'float' => 12.34,
+			'double' => 123.45,
+			'datetime' => time(),
+			'blob' => 'Binary data!'
+		]);
+
+		$this->assertEquals([
+			'_id' => $id,
+			'int' => 123456,
+			'int32' => '123456',
+			'int64' => '123456',
+			'string' => 'abc',
+			'array' => ['foo', 'bar'],
+			'object' => ['foo' => 'bar'],
+			'float' => 12.34,
+			'double' => 123.45,
+			'datetime' => new MongoDate(time()),
+			'blob' => new MongoBinData('Binary data!', 2)
+		], $mongo->select()->where('_id', $id)->fetch(false));
+
+		// Test defaults and nulls
+		$id = $mongo->create([
+			'array' => null
+		]);
+
+		$this->assertEquals([
+			'_id' => $id,
+			'array' => null,
+			'datetime' => null
+		], $mongo->select()->where('_id', $id)->fetch(false));
+	}
 
 }

@@ -8,6 +8,7 @@
 namespace Titon\Model\Mongo;
 
 use Titon\Model\Driver\Dialect\AbstractDialect;
+use Titon\Model\Driver\Type\AbstractType;
 use Titon\Model\Exception\InvalidQueryException;
 use Titon\Model\Exception\UnsupportedFeatureException;
 use Titon\Model\Query;
@@ -129,6 +130,31 @@ class MongoDialect extends AbstractDialect {
 	 * {@inheritdoc}
 	 */
 	protected $_attributes = [];
+
+	/**
+	 * Loop through the data and cast types on each field represented in the schema.
+	 *
+	 * @param \Titon\Model\Query $query
+	 * @param array $data
+	 * @return array
+	 */
+	public function castTypes(Query $query, array $data) {
+		if ($columns = $query->getModel()->getSchema()->getColumns()) {
+			foreach ($columns as $column) {
+				$field = $column['field'];
+
+				if (array_key_exists($field, $data)) {
+					if ($data[$field] !== null) {
+						$data[$field] = AbstractType::factory($column['type'], $this->getDriver())->to($data[$field]);
+					}
+				} else if (in_array($query->getType(), [Query::INSERT, Query::MULTI_INSERT]) && array_key_exists('default', $column)) {
+					$data[$field] = $column['default'];
+				}
+			}
+		}
+
+		return $data;
+	}
 
 	/**
 	 * Execute the ensureIndex() method to create a collection index.
@@ -465,6 +491,8 @@ class MongoDialect extends AbstractDialect {
 					} else {
 						$clean['$set'] = $set;
 					}
+
+					$clean['$set'] = $this->castTypes($query, $clean['$set']);
 				}
 
 				return $clean;
@@ -636,7 +664,7 @@ class MongoDialect extends AbstractDialect {
 	 * {@inheritdoc}
 	 */
 	public function formatValues(Query $query) {
-		return $query->getFields();
+		return $this->castTypes($query, $query->getFields());
 	}
 
 	/**
