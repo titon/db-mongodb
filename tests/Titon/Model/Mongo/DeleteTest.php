@@ -17,15 +17,6 @@ use Titon\Test\TestCase;
 class DeleteTest extends TestCase {
 
 	/**
-	 * Unload fixtures.
-	 */
-	protected function tearDown() {
-		parent::tearDown();
-
-		$this->unloadFixtures();
-	}
-
-	/**
 	 * Test delete with where conditions.
 	 */
 	public function testDeleteConditions() {

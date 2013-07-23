@@ -19,15 +19,6 @@ use \Exception;
 class CreateTest extends TestCase {
 
 	/**
-	 * Unload fixtures.
-	 */
-	protected function tearDown() {
-		parent::tearDown();
-
-		$this->unloadFixtures();
-	}
-
-	/**
 	 * Test basic row inserting. Response should be the new ID.
 	 */
 	public function testCreate() {

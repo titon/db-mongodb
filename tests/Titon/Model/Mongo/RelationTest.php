@@ -20,15 +20,6 @@ use Titon\Test\TestCase;
 class RelationTest extends TestCase {
 
 	/**
-	 * Unload fixtures.
-	 */
-	protected function tearDown() {
-		parent::tearDown();
-
-		$this->unloadFixtures();
-	}
-
-	/**
 	 * Test one-to-one relationships.
 	 */
 	public function testOneToOne() {

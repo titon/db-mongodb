@@ -29,15 +29,6 @@ class DriverTest extends TestCase {
 	}
 
 	/**
-	 * Unload fixtures.
-	 */
-	protected function tearDown() {
-		parent::tearDown();
-
-		$this->unloadFixtures();
-	}
-
-	/**
 	 * Test exceptions are thrown if no servers defined.
 	 */
 	public function testReplicaSet() {
