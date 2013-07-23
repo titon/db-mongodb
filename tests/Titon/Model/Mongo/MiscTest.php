@@ -20,15 +20,6 @@ use Titon\Test\TestCase;
 class MiscTest extends TestCase {
 
 	/**
-	 * Unload fixtures.
-	 */
-	protected function tearDown() {
-		parent::tearDown();
-
-		$this->unloadFixtures();
-	}
-
-	/**
 	 * Test table truncation.
 	 */
 	public function testTruncateTable() {
@@ -87,6 +78,24 @@ class MiscTest extends TestCase {
 			'array' => null,
 			'datetime' => null
 		], $mongo->select()->where('_id', $id)->fetch(false));
+
+		$mongo->query(Query::DROP_TABLE)->save();
+	}
+
+	/**
+	 * Test that fetch list works.
+	 */
+	public function testFetchList() {
+		$mongo = new Mongo();
+
+		$mongo->create(['name' => 'PHP']);
+		$mongo->create(['name' => 'RoR']);
+		$mongo->create(['name' => 'Java']);
+		$mongo->create(['name' => 'Python']);
+
+		$this->assertEquals(['PHP', 'RoR', 'Java', 'Python'], array_values($mongo->select()->fetchList('_id', 'name')));
+
+		$mongo->query(Query::DROP_TABLE)->save();
 	}
 
 }
