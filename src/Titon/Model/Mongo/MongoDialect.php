@@ -463,19 +463,20 @@ class MongoDialect extends AbstractDialect {
 	 * {@inheritdoc}
 	 */
 	public function formatFields(Query $query) {
+		$fields = $query->getFields();
+
 		switch ($query->getType()) {
 			case Query::CREATE_INDEX:
-				return $this->formatOrderBy($query->getFields());
+				return $this->formatOrderBy($fields);
 			break;
 
 			case Query::UPDATE:
-				$fields = $query->getFields();
-				$clean = [];
-				$set = [];
-
 				if (empty($fields)) {
 					throw new InvalidQueryException('Missing field data for update query');
 				}
+
+				$clean = [];
+				$set = [];
 
 				foreach ($fields as $field => $value) {
 					if (substr($field, 0, 1) === '$') {
@@ -529,7 +530,11 @@ class MongoDialect extends AbstractDialect {
 			break;
 
 			default:
-				return $query->getFields();
+				if (empty($fields)) {
+					throw new InvalidQueryException('Missing field data for query');
+				}
+
+				return $fields;
 			break;
 		}
 	}

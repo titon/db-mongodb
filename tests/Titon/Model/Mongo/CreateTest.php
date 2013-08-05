@@ -112,7 +112,12 @@ class CreateTest extends TestCase {
 
 		$user = new User();
 
-		$this->assertSame(0, $user->create([]));
+		try {
+			$this->assertSame(0, $user->create([]));
+			$this->assertTrue(false);
+		} catch (Exception $e) {
+			$this->assertTrue(true);
+		}
 
 		// Relation without data
 		try {
