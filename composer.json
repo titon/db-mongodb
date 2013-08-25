@@ -3,7 +3,7 @@
 	"type": "library",
 	"description": "Provides MongoDB database access for the Titon Model package.",
 	"keywords": ["titon", "model", "driver", "mongo", "mongodb", "nosql", "database"],
-	"homepage": "https://github.com/titon/Model.MongoDB",
+	"homepage": "http://titon.io",
 	"license": "BSD-2",
 	"authors": [
 		{
