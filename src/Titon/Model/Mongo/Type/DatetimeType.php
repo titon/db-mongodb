@@ -1,8 +1,8 @@
 <?php
 /**
- * @copyright	Copyright 2010-2013, The Titon Project
- * @license		http://opensource.org/licenses/bsd-license.php
- * @link		http://titon.io
+ * @copyright   2010-2013, The Titon Project
+ * @license     http://opensource.org/licenses/bsd-license.php
+ * @link        http://titon.io
  */
 
 namespace Titon\Model\Mongo\Type;
@@ -18,29 +18,29 @@ use \MongoDate;
  */
 class DatetimeType extends DateType {
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getDefaultOptions() {
-		return [];
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function getDefaultOptions() {
+        return [];
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getName() {
-		return self::DATETIME;
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function getName() {
+        return self::DATETIME;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function to($value) {
-		if ($value instanceof MongoDate) {
-			return $value;
-		}
+    /**
+     * {@inheritdoc}
+     */
+    public function to($value) {
+        if ($value instanceof MongoDate) {
+            return $value;
+        }
 
-		return new MongoDate(Time::toUnix($value));
-	}
+        return new MongoDate(Time::toUnix($value));
+    }
 
 }

@@ -1,8 +1,8 @@
 <?php
 /**
- * @copyright	Copyright 2010-2013, The Titon Project
- * @license		http://opensource.org/licenses/bsd-license.php
- * @link		http://titon.io
+ * @copyright   2010-2013, The Titon Project
+ * @license     http://opensource.org/licenses/bsd-license.php
+ * @link        http://titon.io
  */
 
 namespace Titon\Model\Mongo\Type;
@@ -17,39 +17,39 @@ use Titon\Test\TestCase;
  */
 class ObjectTypeTest extends TestCase {
 
-	/**
-	 * This method is called before a test is executed.
-	 */
-	protected function setUp() {
-		parent::setUp();
+    /**
+     * This method is called before a test is executed.
+     */
+    protected function setUp() {
+        parent::setUp();
 
-		$this->object = new ObjectType(new DriverStub('default', []));
-	}
+        $this->object = new ObjectType(new DriverStub('default', []));
+    }
 
-	/**
-	 * Test to database conversion.
-	 */
-	public function testTo() {
-		$this->assertSame([123], $this->object->to(123));
-		$this->assertSame(['abc'], $this->object->to('abc'));
-		$this->assertSame([true], $this->object->to(true));
-		$this->assertSame([false], $this->object->to(false));
-		$this->assertSame([], $this->object->to(null));
-		$this->assertSame(['foo' => 'bar'], $this->object->to(['foo' => 'bar']));
-	}
+    /**
+     * Test to database conversion.
+     */
+    public function testTo() {
+        $this->assertSame([123], $this->object->to(123));
+        $this->assertSame(['abc'], $this->object->to('abc'));
+        $this->assertSame([true], $this->object->to(true));
+        $this->assertSame([false], $this->object->to(false));
+        $this->assertSame([], $this->object->to(null));
+        $this->assertSame(['foo' => 'bar'], $this->object->to(['foo' => 'bar']));
+    }
 
-	/**
-	 * Test name string.
-	 */
-	public function testGetName() {
-		$this->assertEquals('object', $this->object->getName());
-	}
+    /**
+     * Test name string.
+     */
+    public function testGetName() {
+        $this->assertEquals('object', $this->object->getName());
+    }
 
-	/**
-	 * Test schema options.
-	 */
-	public function testGetDefaultOptions() {
-		$this->assertEquals([], $this->object->getDefaultOptions());
-	}
+    /**
+     * Test schema options.
+     */
+    public function testGetDefaultOptions() {
+        $this->assertEquals([], $this->object->getDefaultOptions());
+    }
 
 }

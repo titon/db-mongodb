@@ -1,8 +1,8 @@
 <?php
 /**
- * @copyright	Copyright 2010-2013, The Titon Project
- * @license		http://opensource.org/licenses/bsd-license.php
- * @link		http://titon.io
+ * @copyright   2010-2013, The Titon Project
+ * @license     http://opensource.org/licenses/bsd-license.php
+ * @link        http://titon.io
  */
 
 namespace Titon\Model\Mongo\Type;
@@ -17,29 +17,29 @@ use \MongoInt32;
  */
 class Int32Type extends IntType {
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function from($value) {
-		return (string) $value;
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function from($value) {
+        return (string) $value;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getName() {
-		return self::INT . 32;
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function getName() {
+        return self::INT . 32;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function to($value) {
-		if ($value instanceof MongoInt32) {
-			return $value;
-		}
+    /**
+     * {@inheritdoc}
+     */
+    public function to($value) {
+        if ($value instanceof MongoInt32) {
+            return $value;
+        }
 
-		return new MongoInt32((string) $value);
-	}
+        return new MongoInt32((string) $value);
+    }
 
 }
