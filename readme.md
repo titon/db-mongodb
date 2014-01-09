@@ -1,10 +1,10 @@
-# Model.MongoDB v0.3.3 [![Build Status](https://travis-ci.org/titon/model-mongodb.png)](https://travis-ci.org/titon/model-mongodb) #
+# DB\MongoDB v0.4.0 [![Build Status](https://travis-ci.org/titon/db-mongodb.png)](https://travis-ci.org/titon/db-mongodb) #
 
-Provides MongoDB access for the Titon Model package.
+Provides MongoDB access for the Titon database package.
 
 ### Dependencies ###
 
-* `Model`
+* `DB`
 
 ### Requirements ###
 
