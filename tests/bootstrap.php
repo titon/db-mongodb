@@ -16,7 +16,7 @@ if (!file_exists(VENDOR_DIR . '/autoload.php')) {
 }
 
 $loader = require VENDOR_DIR . '/autoload.php';
-$loader->add('Titon\\Model\\Mongo', TEST_DIR);
+$loader->add('Titon\\Db\\Mongo', TEST_DIR);
 
 // Define database credentials
 $db = [
@@ -28,6 +28,6 @@ $db = [
 
 Titon\Common\Config::set('db', $db);
 
-// Used by models
-Titon\Common\Registry::factory('Titon\Model\Connection')
-    ->addDriver(new Titon\Model\Mongo\MongoDriver('default', $db));
+// Used by tables
+Titon\Common\Registry::factory('Titon\Db\Connection')
+    ->addDriver(new Titon\Db\Mongo\MongoDriver('default', $db));

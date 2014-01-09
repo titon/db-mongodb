@@ -1,8 +1,8 @@
 {
-    "name": "titon/model-mongodb",
+    "name": "titon/db-mongodb",
     "type": "library",
-    "description": "Provides MongoDB database access for the Titon Model package.",
-    "keywords": ["titon", "model", "driver", "mongo", "mongodb", "nosql", "database"],
+    "description": "Provides MongoDB database access for the Titon database package.",
+    "keywords": ["titon", "driver", "mongo", "mongodb", "nosql", "database"],
     "homepage": "http://titon.io",
     "license": "BSD-2",
     "authors": [
@@ -14,13 +14,13 @@
     "require": {
         "php": ">=5.4.0",
         "ext-mongo": "*",
-        "titon/model": "*"
+        "titon/db": "*"
     },
     "require-dev": {
         "titon/test": "*",
         "titon/cache": "*"
     },
     "autoload": {
-        "psr-0": { "Titon\\Model\\Mongo": "src/" }
+        "psr-0": { "Titon\\Db\\Mongo": "src/" }
     }
 }
