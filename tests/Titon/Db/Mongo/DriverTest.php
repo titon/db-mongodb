@@ -69,7 +69,7 @@ class DriverTest extends TestCase {
             'superman',
             'spiderman',
             'wolverine'
-        ], $this->object->query(['distinct' => 'users', 'key' => 'username'])->fetchAll(false));
+        ], $this->object->query(['distinct' => 'users', 'key' => 'username'])->find());
     }
 
 }

@@ -10,6 +10,7 @@ namespace Titon\Db\Mongo;
 use Titon\Db\Driver\AbstractDriver;
 use Titon\Db\Exception\InvalidQueryException;
 use Titon\Db\Exception\UnsupportedQueryStatementException;
+use Titon\Db\Mongo\Finder\ListFinder;
 use Titon\Db\Table;
 use Titon\Db\Mongo\Exception\MissingServersException;
 use Titon\Db\Query;
@@ -55,6 +56,7 @@ class MongoDriver extends AbstractDriver {
      */
     public function initialize() {
         $this->setDialect(new MongoDialect($this));
+        $this->addFinder(new ListFinder());
     }
 
     /**

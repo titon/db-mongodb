@@ -31,30 +31,6 @@ class Collection extends Table {
     /**
      * {@inheritdoc}
      */
-    public function fetchList(Query $query, $key = null, $value = null, array $options = []) {
-        $options['wrap'] = false;
-        $results = $this->_processFetch($query, __FUNCTION__, $options);
-
-        $key = $key ?: $this->getPrimaryKey();
-        $value = $value ?: $this->getDisplayField();
-        $list = [];
-
-        foreach ($results as $result) {
-
-            // Flatten ID objects so that we can extract
-            if (isset($result['_id'])) {
-                $result['_id'] = (string) $result['_id'];
-            }
-
-            $list[Hash::extract($result, $key)] = Hash::extract($result, $value);
-        }
-
-        return $list;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     final public function getPrimaryKey() {
         return '_id'; // Should always be _id
     }

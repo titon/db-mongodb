@@ -7,6 +7,7 @@
 
 namespace Titon\Db\Mongo;
 
+use Titon\Db\Entity;
 use Titon\Test\Stub\Table\Book;
 use Titon\Test\Stub\Table\Genre;
 use Titon\Test\Stub\Table\Profile;
@@ -39,17 +40,20 @@ class RelationTest extends TestCase {
         $profile_id = $user->Profile->id;
 
         // Read
-        $this->assertEquals([
+        $results = $user->select()->where('_id', $user_id)->with('Profile')->fetch();
+        $results->Profile;
+
+        $this->assertEquals(new Entity([
             '_id' => $user_id,
             'username' => 'ironman',
             'firstName' => 'Tony',
             'lastName' => 'Stark',
-            'Profile' => [
+            'Profile' => new Entity([
                 '_id' => $profile_id,
                 'category' => 'Superhero',
                 'user_id' => $user_id
-            ]
-        ], $user->select()->where('_id', $user_id)->with('Profile')->fetch(false));
+            ])
+        ]), $results);
 
         // Update
         $user->update($user_id, [
@@ -60,19 +64,22 @@ class RelationTest extends TestCase {
             ]
         ]);
 
-        $this->assertEquals([
+        $results = $user->select()->where('_id', $user_id)->with('Profile')->fetch();
+        $results->Profile;
+
+        $this->assertEquals(new Entity([
             '_id' => $user_id,
             'username' => 'ironman',
             'firstName' => 'Tony',
             'lastName' => 'Stark',
             'age' => 38,
-            'Profile' => [
+            'Profile' => new Entity([
                 '_id' => $profile_id,
                 'category' => 'Superhero',
                 'user_id' => $user_id,
                 'status' => 'active'
-            ]
-        ], $user->select()->where('_id', $user_id)->with('Profile')->fetch(false));
+            ])
+        ]), $results);
 
         // Delete w/ cascade
         $this->assertTrue($user->exists($user_id));
@@ -112,7 +119,7 @@ class RelationTest extends TestCase {
         ]);
 
         // Read
-        $actual = $series->select()->where('_id', $series_id)->with('Books')->fetch(false);
+        $actual = $series->select()->where('_id', $series_id)->with('Books')->fetch()->toArray();
         $book1_id = $actual['Books'][0]['_id'];
 
         $this->assertEquals('A Series Of Unfortunate Events', $actual['name']);
@@ -129,7 +136,7 @@ class RelationTest extends TestCase {
 
         $actual = $series->select()->where('_id', $series_id)->with('Books', function() {
             $this->orderBy('_id', 'asc');
-        })->fetch(false);
+        })->fetch()->toArray();
 
         $this->assertArrayHasKey('author', $actual);
         $this->assertEquals('The Bad Beginning (Updated)', $actual['Books'][0]['name']);
@@ -176,7 +183,7 @@ class RelationTest extends TestCase {
                 'firstName' => 'Tony',
                 'lastName' => 'Stark',
             ]
-        ], $profile->select()->where('_id', $profile_id)->with('User')->fetch(false));
+        ], $profile->select()->where('_id', $profile_id)->with('User')->fetch()->toArray());
     }
 
     /**
@@ -187,7 +194,7 @@ class RelationTest extends TestCase {
 
         $book = new Book();
         $genre = new Genre();
-        $genres = $genre->select()->fetchAll(false);
+        $genres = $genre->select()->fetchAll();
         $g1_id = $genres[0]['_id'];
         $g2_id = $genres[1]['_id'];
         $g3_id = $genres[2]['_id'];
@@ -203,7 +210,7 @@ class RelationTest extends TestCase {
         ]);
 
         // Read
-        $actual = $book->select()->where('_id', $book_id)->with('Genres')->fetch(false);
+        $actual = $book->select()->where('_id', $book_id)->with('Genres')->fetch();
 
         $this->assertEquals(3, count($actual['Genres']));
 

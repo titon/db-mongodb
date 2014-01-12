@@ -119,21 +119,7 @@ class MongoResult extends AbstractResult {
     /**
      * {@inheritdoc}
      */
-    public function fetch() {
-        $cursor = $this->_cursor;
-        $results = [];
-
-        while ($cursor->hasNext()) {
-            return $cursor->getNext();
-        }
-
-        return $results;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function fetchAll() {
+    public function find() {
         if (isset($this->_response['retval'])) {
             return $this->_response['retval'];
 

@@ -9,6 +9,7 @@ namespace Titon\Db\Mongo;
 
 use MongoBinData;
 use MongoDate;
+use Titon\Db\Entity;
 use Titon\Db\Query;
 use Titon\Test\Stub\Table\Mongo;
 use Titon\Test\Stub\Table\User;
@@ -54,7 +55,7 @@ class MiscTest extends TestCase {
             'blob' => 'Binary data!'
         ]);
 
-        $this->assertEquals([
+        $this->assertEquals(new Document([
             '_id' => $id,
             'int' => 123456,
             'int32' => '123456',
@@ -66,18 +67,18 @@ class MiscTest extends TestCase {
             'double' => 123.45,
             'datetime' => new MongoDate(time()),
             'blob' => new MongoBinData('Binary data!', 2)
-        ], $mongo->select()->where('_id', $id)->fetch(false));
+        ]), $mongo->select()->where('_id', $id)->fetch());
 
         // Test defaults and nulls
         $id = $mongo->create([
             'array' => null
         ]);
 
-        $this->assertEquals([
+        $this->assertEquals(new Document([
             '_id' => $id,
             'array' => null,
             'datetime' => null
-        ], $mongo->select()->where('_id', $id)->fetch(false));
+        ]), $mongo->select()->where('_id', $id)->fetch());
 
         $mongo->query(Query::DROP_TABLE)->save();
     }

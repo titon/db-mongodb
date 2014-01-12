@@ -31,34 +31,34 @@ class ReadTest extends TestCase {
         $book = new Book();
 
         // Single
-        $this->assertEquals([
+        $this->assertEquals(new Entity([
             'series_id' => 1,
             'name' => 'A Game of Thrones',
             'isbn' => '0-553-10354-7',
             'released' => '1996-08-02'
-        ], $book->select('series_id', 'name', 'isbn', 'released')->fetch(false));
+        ]), $book->select('series_id', 'name', 'isbn', 'released')->fetch());
 
         // Multiple
         $this->assertEquals([
-            [
+            new Entity([
                 'series_id' => 3,
                 'name' => 'The Fellowship of the Ring',
                 'isbn' => '',
                 'released' => '1954-07-24'
-            ],
-            [
+            ]),
+            new Entity([
                 'series_id' => 3,
                 'name' => 'The Two Towers',
                 'isbn' => '',
                 'released' => '1954-11-11'
-            ],
-            [
+            ]),
+            new Entity([
                 'series_id' => 3,
                 'name' => 'The Return of the King',
                 'isbn' => '',
                 'released' => '1955-10-25'
-            ],
-        ], $book->select('series_id', 'name', 'isbn', 'released')->where('series_id', 3)->orderBy('_id', 'asc')->fetchAll(false));
+            ]),
+        ], $book->select('series_id', 'name', 'isbn', 'released')->where('series_id', 3)->orderBy('_id', 'asc')->fetchAll());
     }
 
     /**
@@ -88,15 +88,15 @@ class ReadTest extends TestCase {
         $user = new User();
 
         $this->assertEquals([
-            ['username' => 'batman'],
-            ['username' => 'superman'],
-            ['username' => 'spiderman'],
-        ], $user->select('username')->where('username', 'like', '/man/')->orderBy('_id', 'asc')->fetchAll(false));
+            new Entity(['username' => 'batman']),
+            new Entity(['username' => 'superman']),
+            new Entity(['username' => 'spiderman']),
+        ], $user->select('username')->where('username', 'like', '/man/')->orderBy('_id', 'asc')->fetchAll());
 
         $this->assertEquals([
-            ['username' => 'miles'],
-            ['username' => 'wolverine']
-        ], $user->select('username')->where('username', 'notLike', '/man/')->orderBy('_id', 'asc')->fetchAll(false));
+            new Entity(['username' => 'miles']),
+            new Entity(['username' => 'wolverine'])
+        ], $user->select('username')->where('username', 'notLike', '/man/')->orderBy('_id', 'asc')->fetchAll());
     }
 
     /**
@@ -108,15 +108,15 @@ class ReadTest extends TestCase {
         $user = new User();
 
         $this->assertEquals([
-            ['username' => 'batman'],
-            ['username' => 'superman'],
-            ['username' => 'spiderman'],
-        ], $user->select('username')->where('username', 'regexp', '/man$/')->orderBy('id', 'asc')->fetchAll(false));
+            new Entity(['username' => 'batman']),
+            new Entity(['username' => 'superman']),
+            new Entity(['username' => 'spiderman']),
+        ], $user->select('username')->where('username', 'regexp', '/man$/')->orderBy('id', 'asc')->fetchAll());
 
         $this->assertEquals([
-            ['username' => 'miles'],
-            ['username' => 'wolverine']
-        ], $user->select('username')->where('username', 'notRegexp', '/man$/')->fetchAll(false));
+            new Entity(['username' => 'miles']),
+            new Entity(['username' => 'wolverine'])
+        ], $user->select('username')->where('username', 'notRegexp', '/man$/')->fetchAll());
     }
 
     /**
@@ -128,15 +128,15 @@ class ReadTest extends TestCase {
         $user = new User();
 
         $this->assertEquals([
-            ['username' => 'miles'],
-            ['username' => 'superman'],
-        ], $user->select('username')->where('username', 'in', ['miles', 'superman'])->fetchAll(false)); // use fake 10
+            new Entity(['username' => 'miles']),
+            new Entity(['username' => 'superman']),
+        ], $user->select('username')->where('username', 'in', ['miles', 'superman'])->fetchAll()); // use fake 10
 
         $this->assertEquals([
-            ['username' => 'batman'],
-            ['username' => 'spiderman'],
-            ['username' => 'wolverine']
-        ], $user->select('username')->where('username', 'notIn', ['miles', 'superman'])->fetchAll(false));
+            new Entity(['username' => 'batman']),
+            new Entity(['username' => 'spiderman']),
+            new Entity(['username' => 'wolverine'])
+        ], $user->select('username')->where('username', 'notIn', ['miles', 'superman'])->fetchAll());
     }
 
     /**
@@ -148,15 +148,15 @@ class ReadTest extends TestCase {
         $user = new User();
 
         $this->assertEquals([
-            ['username' => 'batman'],
-            ['username' => 'superman'],
-        ], $user->select('username')->where('age', 'between', [30, 45])->fetchAll(false));
+            new Entity(['username' => 'batman']),
+            new Entity(['username' => 'superman']),
+        ], $user->select('username')->where('age', 'between', [30, 45])->fetchAll());
 
         $this->assertEquals([
-            ['username' => 'miles'],
-            ['username' => 'spiderman'],
-            ['username' => 'wolverine']
-        ], $user->select('username')->where('age', 'notBetween', [30, 45])->fetchAll(false));
+            new Entity(['username' => 'miles']),
+            new Entity(['username' => 'spiderman']),
+            new Entity(['username' => 'wolverine'])
+        ], $user->select('username')->where('age', 'notBetween', [30, 45])->fetchAll());
     }
 
     /**
@@ -169,15 +169,15 @@ class ReadTest extends TestCase {
         $user->query(Query::UPDATE)->fields(['created' => null])->where('country_id', 1)->save();
 
         $this->assertEquals([
-            ['username' => 'miles']
-        ], $user->select('username')->where('created', 'isNull', null)->fetchAll(false));
+            new Entity(['username' => 'miles'])
+        ], $user->select('username')->where('created', 'isNull', null)->fetchAll());
 
         $this->assertEquals([
-            ['username' => 'batman'],
-            ['username' => 'superman'],
-            ['username' => 'spiderman'],
-            ['username' => 'wolverine']
-        ], $user->select('username')->where('created', 'isNotNull', null)->orderBy('_id', 'asc')->fetchAll(false));
+            new Entity(['username' => 'batman']),
+            new Entity(['username' => 'superman']),
+            new Entity(['username' => 'spiderman']),
+            new Entity(['username' => 'wolverine'])
+        ], $user->select('username')->where('created', 'isNotNull', null)->orderBy('_id', 'asc')->fetchAll());
     }
 
     /**
@@ -205,7 +205,7 @@ class ReadTest extends TestCase {
 
         $book = new Book();
 
-        $this->assertEquals(3, count($book->select('name')->groupBy('series_id')->orderBy('id', 'asc')->fetchAll(false)));
+        $this->assertEquals(3, count($book->select('name')->groupBy('series_id')->orderBy('id', 'asc')->fetchAll()));
     }
 
     /**
@@ -291,45 +291,46 @@ class ReadTest extends TestCase {
         $stat = new Stat();
 
         $this->assertEquals([
-            [
+            new Entity([
                 'name' => 'Ranger',
                 'health' => 800,
                 'isMelee' => false
-            ]
+            ])
         ], $stat->select('name', 'health', 'isMelee')
             ->where('isMelee', false)
             ->where('health', '>=', 700)
-            ->fetchAll(false));
+            ->fetchAll());
 
         $this->assertEquals([
-            [
+            new Entity([
                 'name' => 'Ranger',
                 'health' => 800,
                 'energy' => 335,
                 'range' => 6.75
-            ], [
+            ]),
+            new Entity([
                 'name' => 'Mage',
                 'health' => 600,
                 'energy' => 600,
                 'range' => 8.33
-            ]
+            ])
         ], $stat->select('name', 'health', 'energy', 'range')
             ->where('health', '<', 1000)
             ->where('range', '>=', 5)
             ->where('energy', '!=', 0)
-            ->fetchAll(false));
+            ->fetchAll());
 
         $this->assertEquals([
-            [
+            new Entity([
                 'name' => 'Warrior',
                 'health' => 1500,
                 'isMelee' => true,
                 'range' => 1
-            ]
+            ])
         ], $stat->select('name', 'health', 'isMelee', 'range')
             ->where(function() {
                 $this->gte('health', 500)->lte('range', 7)->eq('isMelee', true);
-            })->fetchAll(false));
+            })->fetchAll());
     }
 
     /**
@@ -341,42 +342,45 @@ class ReadTest extends TestCase {
         $stat = new Stat();
 
         $this->assertEquals([
-            [
+            new Entity([
                 'name' => 'Warrior',
                 'health' => 1500,
                 'range' => 1
-            ], [
+            ]),
+            new Entity([
                 'name' => 'Mage',
                 'health' => 600,
                 'range' => 8.33
-            ]
+            ])
         ], $stat->select('name', 'health', 'range')
             ->orWhere('health', '>', 1000)
             ->orWhere('range', '>', 7)
-            ->fetchAll(false));
+            ->fetchAll());
 
         $this->assertEquals([
-            [
+            new Entity([
                 'name' => 'Warrior',
                 'damage' => 125.25,
                 'defense' => 55.75,
                 'range' => 1
-            ], [
+            ]),
+            new Entity([
                 'name' => 'Ranger',
                 'damage' => 90.45,
                 'defense' => 30.5,
                 'range' => 6.75
-            ], [
+            ]),
+            new Entity([
                 'name' => 'Mage',
                 'damage' => 55.84,
                 'defense' => 40.15,
                 'range' => 8.33
-            ]
+            ])
         ], $stat->select('name', 'damage', 'defense', 'range')
             ->orWhere(function() {
                 $this->gt('damage', 100)->gt('range', 5)->gt('defense', 50);
             })
-            ->fetchAll(false));
+            ->fetchAll());
     }
 
     /**
@@ -388,14 +392,14 @@ class ReadTest extends TestCase {
         $stat = new Stat();
 
         $this->assertEquals([
-            ['name' => 'Mage']
+            new Entity(['name' => 'Mage'])
         ], $stat->select('name')
             ->where(function() {
                 $this->eq('isMelee', false);
                 $this->either(function() {
                     $this->lte('health', 600)->lte('damage', 60);
                 });
-            })->fetchAll(false));
+            })->fetchAll());
     }
 
     /**
@@ -407,13 +411,13 @@ class ReadTest extends TestCase {
         $stat = new Stat();
 
         $this->assertEquals([
-            ['name' => 'Warrior']
-        ], $stat->select('name')->where('range', 1.0)->fetchAll(false));
+            new Entity(['name' => 'Warrior'])
+        ], $stat->select('name')->where('range', 1.0)->fetchAll());
 
         $this->assertEquals([
-            ['name' => 'Ranger'],
-            ['name' => 'Mage'],
-        ], $stat->select('name')->where('range', '!=', 1.0)->fetchAll(false));
+            new Entity(['name' => 'Ranger']),
+            new Entity(['name' => 'Mage']),
+        ], $stat->select('name')->where('range', '!=', 1.0)->fetchAll());
     }
 
     /**
@@ -421,7 +425,6 @@ class ReadTest extends TestCase {
      */
     public function testOpAll() {
         $this->loadFixtures('Stats');
-
     }
 
     /**
@@ -433,13 +436,13 @@ class ReadTest extends TestCase {
         $stat = new Stat();
 
         $this->assertEquals([
-            ['name' => 'Warrior']
-        ], $stat->select('name')->where('health', '>', 800)->fetchAll(false));
+            new Entity(['name' => 'Warrior'])
+        ], $stat->select('name')->where('health', '>', 800)->fetchAll());
 
         $this->assertEquals([
-            ['name' => 'Warrior'],
-            ['name' => 'Ranger'],
-        ], $stat->select('name')->where('health', '>=', 800)->fetchAll(false));
+            new Entity(['name' => 'Warrior']),
+            new Entity(['name' => 'Ranger']),
+        ], $stat->select('name')->where('health', '>=', 800)->fetchAll());
     }
 
     /**
@@ -451,13 +454,13 @@ class ReadTest extends TestCase {
         $stat = new Stat();
 
         $this->assertEquals([
-            ['name' => 'Mage']
-        ], $stat->select('name')->where('health', '<', 800)->fetchAll(false));
+            new Entity(['name' => 'Mage'])
+        ], $stat->select('name')->where('health', '<', 800)->fetchAll());
 
         $this->assertEquals([
-            ['name' => 'Ranger'],
-            ['name' => 'Mage'],
-        ], $stat->select('name')->where('health', '<=', 800)->fetchAll(false));
+            new Entity(['name' => 'Ranger']),
+            new Entity(['name' => 'Mage']),
+        ], $stat->select('name')->where('health', '<=', 800)->fetchAll());
     }
 
     /**
@@ -469,13 +472,13 @@ class ReadTest extends TestCase {
         $stat = new Stat();
 
         $this->assertEquals([
-            ['name' => 'Warrior']
-        ], $stat->select('name')->where('range', 'in', [1, 2, 3])->fetchAll(false));
+            new Entity(['name' => 'Warrior'])
+        ], $stat->select('name')->where('range', 'in', [1, 2, 3])->fetchAll());
 
         $this->assertEquals([
-            ['name' => 'Ranger'],
-            ['name' => 'Mage'],
-        ], $stat->select('name')->where('range', 'notIn', [1, 2, 3])->fetchAll(false));
+            new Entity(['name' => 'Ranger']),
+            new Entity(['name' => 'Mage']),
+        ], $stat->select('name')->where('range', 'notIn', [1, 2, 3])->fetchAll());
     }
 
     /**
@@ -488,14 +491,14 @@ class ReadTest extends TestCase {
         $stat->create(['name' => 'Necromancer']);
 
         $this->assertEquals([
-            ['name' => 'Warrior'],
-            ['name' => 'Ranger'],
-            ['name' => 'Mage'],
-        ], $stat->select('name')->where('range', 'exists', true)->fetchAll(false));
+            new Entity(['name' => 'Warrior']),
+            new Entity(['name' => 'Ranger']),
+            new Entity(['name' => 'Mage']),
+        ], $stat->select('name')->where('range', 'exists', true)->fetchAll());
 
         $this->assertEquals([
-            ['name' => 'Necromancer'],
-        ], $stat->select('name')->where('range', 'exists', false)->fetchAll(false));
+            new Entity(['name' => 'Necromancer']),
+        ], $stat->select('name')->where('range', 'exists', false)->fetchAll());
     }
 
     /**
@@ -508,14 +511,14 @@ class ReadTest extends TestCase {
         $stat->create(['name' => 'Necromancer', 'isMelee' => 'N/A']);
 
         $this->assertEquals([
-            ['name' => 'Warrior'],
-            ['name' => 'Ranger'],
-            ['name' => 'Mage'],
-        ], $stat->select('name')->where('isMelee', 'type', MongoDialect::TYPE_BOOLEAN)->fetchAll(false));
+            new Entity(['name' => 'Warrior']),
+            new Entity(['name' => 'Ranger']),
+            new Entity(['name' => 'Mage']),
+        ], $stat->select('name')->where('isMelee', 'type', MongoDialect::TYPE_BOOLEAN)->fetchAll());
 
         $this->assertEquals([
-            ['name' => 'Necromancer'],
-        ], $stat->select('name')->where('isMelee', 'not', ['$type' => MongoDialect::TYPE_BOOLEAN])->fetchAll(false));
+            new Entity(['name' => 'Necromancer']),
+        ], $stat->select('name')->where('isMelee', 'not', ['$type' => MongoDialect::TYPE_BOOLEAN])->fetchAll());
     }
 
     /**
@@ -527,19 +530,19 @@ class ReadTest extends TestCase {
         $stat = new Stat();
 
         $this->assertEquals([
-            ['name' => 'Warrior']
-        ], $stat->select('name')->where('isMelee', 'where', 'function() { return (this.isMelee == true); }')->fetchAll(false));
+            new Entity(['name' => 'Warrior'])
+        ], $stat->select('name')->where('isMelee', 'where', 'function() { return (this.isMelee == true); }')->fetchAll());
 
         $this->assertEquals([
-            ['name' => 'Ranger'],
-            ['name' => 'Mage'],
-        ], $stat->select('name')->where('damage', 'where', new MongoCode('function() { return (this.damage > min && this.damage < max); }', ['min' => 50, 'max' => 100]))->fetchAll(false));
+            new Entity(['name' => 'Ranger']),
+            new Entity(['name' => 'Mage']),
+        ], $stat->select('name')->where('damage', 'where', new MongoCode('function() { return (this.damage > min && this.damage < max); }', ['min' => 50, 'max' => 100]))->fetchAll());
 
         // Not MongoCode
         try {
             $this->assertEquals([
-                ['name' => 'Warrior']
-            ], $stat->select('name')->where('isMelee', 'where', 123456)->fetchAll(false));
+                new Entity(['name' => 'Warrior'])
+            ], $stat->select('name')->where('isMelee', 'where', 123456)->fetchAll());
 
             $this->assertTrue(false);
         } catch (Exception $e) {
