@@ -30,7 +30,7 @@ class MongoQuery extends Query {
     public function count() {
         $this->isCount = true;
 
-        return $this->getTable()->count($this);
+        return $this->getRepository()->count($this);
     }
 
     /**

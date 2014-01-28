@@ -18,7 +18,8 @@
     },
     "require-dev": {
         "titon/test": "dev-master",
-        "titon/cache": "*"
+        "titon/cache": "*",
+        "titon/model": "*"
     },
     "autoload": {
         "psr-0": { "Titon\\Db\\Mongo": "src/" }

@@ -9,10 +9,10 @@ namespace Titon\Db\Mongo;
 
 use Titon\Db\Entity;
 use Titon\Db\Query;
-use Titon\Test\Stub\Table\Book;
-use Titon\Test\Stub\Table\Genre;
-use Titon\Test\Stub\Table\Stat;
-use Titon\Test\Stub\Table\User;
+use Titon\Test\Stub\Repository\Book;
+use Titon\Test\Stub\Repository\Genre;
+use Titon\Test\Stub\Repository\Stat;
+use Titon\Test\Stub\Repository\User;
 use Titon\Test\TestCase;
 use \Exception;
 use \MongoCode;

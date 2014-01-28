@@ -9,24 +9,14 @@ namespace Titon\Db\Mongo;
 
 use Titon\Db\Driver\Schema;
 use Titon\Db\Query;
-use Titon\Db\Table;
-use Titon\Utility\Hash;
+use Titon\Db\Repository;
 
 /**
  * A table layer specific to MongoDB.
  *
  * @package Titon\Db\Mongo
  */
-class Collection extends Table {
-
-    /**
-     * Configuration.
-     *
-     * @type array
-     */
-    protected $_config = [
-        'entity' => 'Titon\Db\Mongo\Document'
-    ];
+class Collection extends Repository {
 
     /**
      * {@inheritdoc}
@@ -43,7 +33,7 @@ class Collection extends Table {
             return $this->_schema;
         }
 
-        $this->setSchema(new Schema($this->getTableName(), $this->_schema));
+        $this->setSchema(new Schema($this->getTable(), $this->_schema));
 
         return $this->_schema;
     }
@@ -55,7 +45,7 @@ class Collection extends Table {
         $this->data = [];
 
         $query = new MongoQuery($type, $this);
-        $query->from($this->getTableName(), $this->getAlias());
+        $query->from($this->getTable(), $this->getAlias());
 
         return $query;
     }

@@ -65,7 +65,7 @@ class MongoResult extends AbstractResult {
             }
 
             if ($query) {
-                $params['ns'] = $query->getTableName();
+                $params['ns'] = $query->getTable();
             }
 
             if (isset($response['command'])) {

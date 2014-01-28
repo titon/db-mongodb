@@ -139,7 +139,7 @@ class MongoDialect extends AbstractDialect {
      * @return array
      */
     public function castTypes(Query $query, array $data) {
-        if ($columns = $query->getTable()->getSchema()->getColumns()) {
+        if ($columns = $query->getRepository()->getSchema()->getColumns()) {
             foreach ($columns as $column) {
                 $field = $column['field'];
 
@@ -147,7 +147,7 @@ class MongoDialect extends AbstractDialect {
                     if ($data[$field] !== null) {
                         $data[$field] = AbstractType::factory($column['type'], $this->getDriver())->to($data[$field]);
                     }
-                } else if (in_array($query->getType(), [Query::INSERT, Query::MULTI_INSERT]) && array_key_exists('default', $column)) {
+                } else if (in_array($query->getType(), [Query::INSERT, Query::MULTI_INSERT], true) && array_key_exists('default', $column)) {
                     $data[$field] = $column['default'];
                 }
             }

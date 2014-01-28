@@ -11,8 +11,8 @@ use MongoBinData;
 use MongoDate;
 use Titon\Db\Entity;
 use Titon\Db\Query;
-use Titon\Test\Stub\Table\Mongo;
-use Titon\Test\Stub\Table\User;
+use Titon\Test\Stub\Repository\Mongo;
+use Titon\Test\Stub\Repository\User;
 use Titon\Test\TestCase;
 
 /**
@@ -55,7 +55,7 @@ class MiscTest extends TestCase {
             'blob' => 'Binary data!'
         ]);
 
-        $this->assertEquals(new Document([
+        $this->assertEquals(new Entity([
             '_id' => $id,
             'int' => 123456,
             'int32' => '123456',
@@ -74,7 +74,7 @@ class MiscTest extends TestCase {
             'array' => null
         ]);
 
-        $this->assertEquals(new Document([
+        $this->assertEquals(new Entity([
             '_id' => $id,
             'array' => null,
             'datetime' => null

@@ -7,7 +7,7 @@
 
 namespace Titon\Db\Mongo;
 
-use Titon\Test\Stub\Table\User;
+use Titon\Test\Stub\Repository\User;
 use Titon\Test\TestCase;
 
 /**

@@ -11,7 +11,7 @@ use Titon\Common\Config;
 use Titon\Db\Query;
 use Titon\Db\Query\Expr;
 use Titon\Db\Query\Predicate;
-use Titon\Test\Stub\Table\User;
+use Titon\Test\Stub\Repository\User;
 use Titon\Test\TestCase;
 use \MongoRegex;
 

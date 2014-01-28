@@ -11,7 +11,7 @@ use Titon\Db\Driver\AbstractDriver;
 use Titon\Db\Exception\InvalidQueryException;
 use Titon\Db\Exception\UnsupportedQueryStatementException;
 use Titon\Db\Mongo\Finder\ListFinder;
-use Titon\Db\Table;
+use Titon\Db\Repository;
 use Titon\Db\Mongo\Exception\MissingServersException;
 use Titon\Db\Query;
 use \MongoClient;
@@ -135,7 +135,7 @@ class MongoDriver extends AbstractDriver {
     /**
      * {@inheritdoc}
      */
-    public function getLastInsertID(Table $table) {
+    public function getLastInsertID(Repository $table) {
         return $this->_lastID;
     }
 
@@ -254,7 +254,7 @@ class MongoDriver extends AbstractDriver {
                     throw new UnsupportedQueryStatementException(sprintf('Query statement %s does not exist or has not been implemented', $type));
                 }
 
-                $response = call_user_func_array([$dialect, $method], [$db->selectCollection($query->getTableName()), $query]);
+                $response = call_user_func_array([$dialect, $method], [$db->selectCollection($query->getTable()), $query]);
             }
         }
 
