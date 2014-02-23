@@ -8,15 +8,25 @@
 namespace Titon\Db\Mongo;
 
 use Titon\Db\Driver\Schema;
+use Titon\Db\Mongo\Finder\ListFinder;
 use Titon\Db\Query;
 use Titon\Db\Repository;
 
 /**
- * A table layer specific to MongoDB.
+ * A repository layer specific to MongoDB.
  *
  * @package Titon\Db\Mongo
  */
 class Collection extends Repository {
+
+    /**
+     * {@inheritdoc}
+     */
+    public function __construct(array $config = []) {
+        parent::__construct($config);
+
+        $this->addFinder('list', new ListFinder());
+    }
 
     /**
      * {@inheritdoc}
@@ -36,18 +46,6 @@ class Collection extends Repository {
         $this->setSchema(new Schema($this->getTable(), $this->_schema));
 
         return $this->_schema;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function query($type) {
-        $this->data = [];
-
-        $query = new MongoQuery($type, $this);
-        $query->from($this->getTable(), $this->getAlias());
-
-        return $query;
     }
 
     /**

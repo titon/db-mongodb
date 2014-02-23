@@ -31,7 +31,7 @@ class DialectTest extends TestCase {
      * This method is called before a test is executed.
      */
     protected function setUp() {
-        $this->driver = new MongoDriver('default', Config::get('db'));
+        $this->driver = new MongoDriver(Config::get('db'));
         $this->driver->connect();
 
         $this->object = $this->driver->getDialect();
@@ -162,10 +162,10 @@ class DialectTest extends TestCase {
         ], $this->object->formatPredicate($pred));
 
         // Subgroup
-        $pred->either(function() {
-            $this->like('name', '/Titon/i')->notLike('name', '/Symfony/i');
-            $this->also(function() {
-                $this->eq('active', 1)->notEq('status', 2);
+        $pred->either(function(Predicate $where) {
+            $where->like('name', '/Titon/i')->notLike('name', '/Symfony/i');
+            $where->also(function(Predicate $where2) {
+                $where2->eq('active', 1)->notEq('status', 2);
             });
         });
 

@@ -8,6 +8,7 @@
 namespace Titon\Db\Mongo;
 
 use Titon\Db\Entity;
+use Titon\Db\EntityCollection;
 use Titon\Db\Query;
 use Titon\Test\Stub\Repository\Stat;
 use Titon\Test\Stub\Repository\User;
@@ -27,7 +28,7 @@ class UpdateTest extends TestCase {
         $this->loadFixtures('Users');
 
         $user = new User();
-        $ids = $user->select()->fetchAll();
+        $ids = $user->select()->all();
         $id = $ids[0]['_id'];
 
         $data = [
@@ -47,7 +48,7 @@ class UpdateTest extends TestCase {
             'lastName' => 'Johnson',
             'age' => 25,
             'created' => '1988-02-26 21:22:34'
-        ]), $user->select()->where('_id', $id)->fetch());
+        ]), $user->select()->where('_id', $id)->first());
     }
 
     /**
@@ -100,24 +101,24 @@ class UpdateTest extends TestCase {
 
         $this->assertSame(4, $user->query(Query::UPDATE)->fields(['country_id' => 1])->where('country_id', '!=', 1)->save());
 
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity(['country_id' => 1, 'username' => 'miles']),
             new Entity(['country_id' => 1, 'username' => 'batman']),
             new Entity(['country_id' => 1, 'username' => 'superman']),
             new Entity(['country_id' => 1, 'username' => 'spiderman']),
             new Entity(['country_id' => 1, 'username' => 'wolverine']),
-        ], $user->select('country_id', 'username')->orderBy('_id', 'asc')->fetchAll());
+        ]), $user->select('country_id', 'username')->orderBy('_id', 'asc')->all());
 
         // No where clause
         $this->assertSame(5, $user->query(Query::UPDATE)->fields(['country_id' => 2])->save());
 
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity(['country_id' => 2, 'username' => 'miles']),
             new Entity(['country_id' => 2, 'username' => 'batman']),
             new Entity(['country_id' => 2, 'username' => 'superman']),
             new Entity(['country_id' => 2, 'username' => 'spiderman']),
             new Entity(['country_id' => 2, 'username' => 'wolverine']),
-        ], $user->select('country_id', 'username')->orderBy('_id', 'asc')->fetchAll());
+        ]), $user->select('country_id', 'username')->orderBy('_id', 'asc')->all());
     }
 
     /**
@@ -130,13 +131,13 @@ class UpdateTest extends TestCase {
 
         $this->assertSame(1, $user->query(Query::UPDATE)->fields(['country_id' => null])->where('country_id', '!=', 1)->limit(1)->save());
 
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity(['country_id' => 1, 'username' => 'miles']),
             new Entity(['country_id' => null, 'username' => 'batman']),
             new Entity(['country_id' => 2, 'username' => 'superman']),
             new Entity(['country_id' => 5, 'username' => 'spiderman']),
             new Entity(['country_id' => 4, 'username' => 'wolverine']),
-        ], $user->select('country_id', 'username')->orderBy('_id', 'asc')->fetchAll());
+        ]), $user->select('country_id', 'username')->orderBy('_id', 'asc')->all());
     }
 
     /**
@@ -152,13 +153,13 @@ class UpdateTest extends TestCase {
             ->where('username', 'like', '/man/')
             ->save());
 
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity(['country_id' => 1, 'username' => 'miles']),
             new Entity(['country_id' => null, 'username' => 'batman']),
             new Entity(['country_id' => null, 'username' => 'superman']),
             new Entity(['country_id' => null, 'username' => 'spiderman']),
             new Entity(['country_id' => 4, 'username' => 'wolverine']),
-        ], $user->select('country_id', 'username')->orderBy('_id', 'asc')->fetchAll());
+        ]), $user->select('country_id', 'username')->orderBy('_id', 'asc')->all());
     }
 
     /**
@@ -173,13 +174,13 @@ class UpdateTest extends TestCase {
             ->fields(['firstName' => ''])
             ->save());
 
-        $this->assertEquals([
+        $this->assertEquals(new EntityCollection([
             new Entity(['username' => 'miles', 'firstName' => '']),
             new Entity(['username' => 'batman', 'firstName' => '']),
             new Entity(['username' => 'superman', 'firstName' => '']),
             new Entity(['username' => 'spiderman', 'firstName' => '']),
             new Entity(['username' => 'wolverine', 'firstName' => '']),
-        ], $user->select('username', 'firstName')->orderBy('_id', 'asc')->fetchAll());
+        ]), $user->select('username', 'firstName')->orderBy('_id', 'asc')->all());
     }
 
     /**
@@ -190,14 +191,14 @@ class UpdateTest extends TestCase {
 
         $stat = new Stat();
 
-        $record = $stat->select()->fetch();
+        $record = $stat->select()->first();
         $this->assertEquals(1.0, $record['range']);
 
         $stat->update($record['_id'], [
             '$inc' => ['range' => 2]
         ]);
 
-        $record = $stat->select()->fetch();
+        $record = $stat->select()->first();
         $this->assertEquals(3.0, $record['range']);
     }
 
@@ -209,14 +210,14 @@ class UpdateTest extends TestCase {
 
         $stat = new Stat();
 
-        $record = $stat->select()->fetch()->toArray();
+        $record = $stat->select()->first()->toArray();
         $this->assertArrayHasKey('health', $record);
 
         $stat->update($record['_id'], [
             '$rename' => ['health' => 'life']
         ]);
 
-        $record = $stat->select()->fetch()->toArray();
+        $record = $stat->select()->first()->toArray();
         $this->assertArrayNotHasKey('health', $record);
     }
 
@@ -228,14 +229,14 @@ class UpdateTest extends TestCase {
 
         $stat = new Stat();
 
-        $record = $stat->select()->fetch()->toArray();
+        $record = $stat->select()->first()->toArray();
         $this->assertArrayHasKey('health', $record);
 
         $stat->update($record['_id'], [
             '$unset' => ['health' => '']
         ]);
 
-        $record = $stat->select()->fetch()->toArray();
+        $record = $stat->select()->first()->toArray();
         $this->assertArrayNotHasKey('health', $record);
     }
 
@@ -247,7 +248,7 @@ class UpdateTest extends TestCase {
 
         $stat = new Stat();
 
-        $record = $stat->select('_id', 'name', 'health', 'range')->fetch();
+        $record = $stat->select('_id', 'name', 'health', 'range')->first();
         $id = $record['_id'];
         unset($record['_id']);
 
@@ -265,7 +266,7 @@ class UpdateTest extends TestCase {
             'name' => 'Warrior',
             'health' => 5000,
             'range' => 2
-        ]), $stat->select('name', 'health', 'range')->fetch());
+        ]), $stat->select('name', 'health', 'range')->first());
     }
 
     /**
@@ -367,16 +368,16 @@ class UpdateTest extends TestCase {
 
         $stat = new Stat();
 
-        $record = $stat->select('_id')->fetch();
+        $record = $stat->select('_id')->first();
         $id = $record['_id'];
 
         // Via object
         $stat->update($id, ['name' => 'Paladin']);
-        $this->assertEquals(new Entity(['name' => 'Paladin']), $stat->select('name')->fetch());
+        $this->assertEquals(new Entity(['name' => 'Paladin']), $stat->select('name')->first());
 
         // Via string (should auto wrap)
         $stat->update((string) $id, ['name' => 'Knight']);
-        $this->assertEquals(new Entity(['name' => 'Knight']), $stat->select('name')->fetch());
+        $this->assertEquals(new Entity(['name' => 'Knight']), $stat->select('name')->first());
     }
 
 }

@@ -14,7 +14,7 @@
     "require": {
         "php": ">=5.4.0",
         "ext-mongo": "*",
-        "titon/db": "*"
+        "titon/db": "dev-master"
     },
     "require-dev": {
         "titon/test": "dev-master",

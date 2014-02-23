@@ -7,7 +7,7 @@
 
 namespace Titon\Db\Mongo;
 
-use Titon\Db\Query\Result\AbstractResult;
+use Titon\Db\Query\ResultSet\AbstractResultSet;
 use Titon\Db\Query;
 use \MongoCursor;
 
@@ -16,7 +16,7 @@ use \MongoCursor;
  *
  * @package Titon\Db\Mongo
  */
-class MongoResult extends AbstractResult {
+class MongoResultSet extends AbstractResultSet {
 
     /**
      * Direct query command.
@@ -130,7 +130,7 @@ class MongoResult extends AbstractResult {
             return $this->_response['values'];
         }
 
-        $cursor = $this->_cursor;
+        $cursor = $this->getCursor();
         $results = [];
 
         if (!$cursor) {
@@ -151,6 +151,15 @@ class MongoResult extends AbstractResult {
      */
     public function getCommand() {
         return $this->_command;
+    }
+
+    /**
+     * Return the MongoDB result cursor.
+     *
+     * @return \MongoCursor
+     */
+    public function getCursor() {
+        return $this->_cursor;
     }
 
     /**

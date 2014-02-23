@@ -9,8 +9,8 @@ namespace Titon\Db\Mongo;
 
 use Titon\Db\Driver\AbstractDriver;
 use Titon\Db\Exception\InvalidQueryException;
+use Titon\Db\Exception\MissingDriverException;
 use Titon\Db\Exception\UnsupportedQueryStatementException;
-use Titon\Db\Mongo\Finder\ListFinder;
 use Titon\Db\Repository;
 use Titon\Db\Mongo\Exception\MissingServersException;
 use Titon\Db\Query;
@@ -56,7 +56,6 @@ class MongoDriver extends AbstractDriver {
      */
     public function initialize() {
         $this->setDialect(new MongoDialect($this));
-        $this->addFinder(new ListFinder());
     }
 
     /**
@@ -70,11 +69,16 @@ class MongoDriver extends AbstractDriver {
      * Connect to the Mongo database.
      *
      * @return bool
+     * @throws \Titon\Db\Exception\MissingDriverException
      * @throws \Titon\Db\Mongo\Exception\MissingServersException
      */
     public function connect() {
         if ($this->isConnected()) {
             return true;
+        }
+
+        if (!$this->isEnabled()) {
+            throw new MissingDriverException('mongodb driver extension is not enabled');
         }
 
         $options = [];
@@ -91,18 +95,19 @@ class MongoDriver extends AbstractDriver {
             $options['password'] = $pass;
         }
 
-        if ($rSet = $this->config->replicaSet) {
-            if (empty($this->config->servers)) {
+        if ($rSet = $this->getConfig('replicaSet')) {
+            if (!$this->getConfig('servers')) {
                 throw new MissingServersException('A list of servers is required for replica set functionality');
             }
 
             $options['replicaSet'] = $rSet;
         }
 
-        $this->_connection = new MongoClient($this->getServer(), $options + $this->config->flags);
-        $this->_connected = $this->_connection->connected;
+        $connection = new MongoClient($this->getServer(), $options + $this->getConfig('flags'));
 
-        return $this->_connected;
+        $this->_connections[$this->getContext()] = $connection;
+
+        return $connection->connected;
     }
 
     /**
@@ -115,11 +120,18 @@ class MongoDriver extends AbstractDriver {
     /**
      * {@inheritdoc}
      */
-    public function disconnect() {
+    public function disconnect($flush = false) {
         $this->reset();
 
         if ($this->isConnected()) {
-            return $this->getConnection()->close(true);
+            /** @type \MongoClient $connection */
+            foreach ($this->_connections as $context => $connection) {
+                if ($flush || $context === $this->getContext()) {
+                    $connection->close(true);
+                }
+            }
+
+            return true;
         }
 
         return false;
@@ -131,82 +143,13 @@ class MongoDriver extends AbstractDriver {
     public function escape($value) {
         return $value;
     }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getLastInsertID(Repository $table) {
-        return $this->_lastID;
-    }
-
-    /**
-     * Build and return the server connection.
-     *
-     * @return string
-     */
-    public function getServer() {
-        $server = 'mongodb://';
-
-        if ($servers = $this->config->servers) {
-            $server .= implode(',', $servers);
-
-        } else {
-            if ($socket = $this->getSocket()) {
-                $server .= $socket;
-            } else {
-                $server .= $this->getHost() . ':' . $this->getPort();
-            }
-        }
-
-        return $server;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getSupportedTypes() {
-        return [
-            'int' => 'Titon\Db\Driver\Type\IntType',
-            'int32' => 'Titon\Db\Mongo\Type\Int32Type',
-            'int64' => 'Titon\Db\Mongo\Type\Int64Type',
-            'integer' => 'Titon\Db\Driver\Type\IntType',
-            'string' => 'Titon\Db\Driver\Type\StringType',
-            'number' => 'Titon\Db\Driver\Type\IntType',
-            'array' => 'Titon\Db\Mongo\Type\ArrayType',
-            'object' => 'Titon\Db\Mongo\Type\ObjectType',
-            'boolean' => 'Titon\Db\Driver\Type\BooleanType',
-            'float' => 'Titon\Db\Driver\Type\FloatType',
-            'double' => 'Titon\Db\Driver\Type\DoubleType',
-            'date' => 'Titon\Db\Mongo\Type\DatetimeType',
-            'time' => 'Titon\Db\Mongo\Type\DatetimeType',
-            'datetime' => 'Titon\Db\Mongo\Type\DatetimeType',
-            'timestamp' => 'Titon\Db\Mongo\Type\DatetimeType',
-            'blob' => 'Titon\Db\Mongo\Type\BlobType',
-            'binary' => 'Titon\Db\Mongo\Type\BlobType',
-        ];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function isEnabled() {
-        return extension_loaded('mongo');
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function listTables($database = null) {
-        return $this->getConnection()->selectDB($database ?: $this->getDatabase())->getCollectionNames();
-    }
-
     /**
      * {@inheritdoc}
      *
      * @param array|\Titon\Db\Query $query
      * @throws \Titon\Db\Exception\InvalidQueryException
      */
-    public function query($query, array $params = []) {
+    public function executeQuery($query, array $params = []) {
         $storage = $this->getStorage();
         $cacheKey = null;
         $cacheLength = null;
@@ -272,9 +215,9 @@ class MongoDriver extends AbstractDriver {
         if (is_array($query)) {
             $response['command'] = $query;
 
-            $this->_result = new MongoResult($response);
+            $this->_result = new MongoResultSet($response);
         } else {
-            $this->_result = new MongoResult($response, $query);
+            $this->_result = new MongoResultSet($response, $query);
         }
 
         $this->logQuery($this->_result);
@@ -289,6 +232,81 @@ class MongoDriver extends AbstractDriver {
         }
 
         return $this->_result;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getLastInsertID(Repository $table) {
+        return $this->_lastID;
+    }
+
+    /**
+     * Build and return the server connection.
+     *
+     * @return string
+     */
+    public function getServer() {
+        $server = 'mongodb://';
+
+        if ($servers = $this->getConfig('servers')) {
+            $server .= implode(',', $servers);
+
+        } else {
+            if ($socket = $this->getSocket()) {
+                $server .= $socket;
+            } else {
+                $server .= $this->getHost() . ':' . $this->getPort();
+            }
+        }
+
+        return $server;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getSupportedTypes() {
+        return [
+            'int' => 'Titon\Db\Driver\Type\IntType',
+            'int32' => 'Titon\Db\Mongo\Type\Int32Type',
+            'int64' => 'Titon\Db\Mongo\Type\Int64Type',
+            'integer' => 'Titon\Db\Driver\Type\IntType',
+            'string' => 'Titon\Db\Driver\Type\StringType',
+            'number' => 'Titon\Db\Driver\Type\IntType',
+            'array' => 'Titon\Db\Mongo\Type\ArrayType',
+            'object' => 'Titon\Db\Mongo\Type\ObjectType',
+            'boolean' => 'Titon\Db\Driver\Type\BooleanType',
+            'float' => 'Titon\Db\Driver\Type\FloatType',
+            'double' => 'Titon\Db\Driver\Type\DoubleType',
+            'date' => 'Titon\Db\Mongo\Type\DatetimeType',
+            'time' => 'Titon\Db\Mongo\Type\DatetimeType',
+            'datetime' => 'Titon\Db\Mongo\Type\DatetimeType',
+            'timestamp' => 'Titon\Db\Mongo\Type\DatetimeType',
+            'blob' => 'Titon\Db\Mongo\Type\BlobType',
+            'binary' => 'Titon\Db\Mongo\Type\BlobType',
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isEnabled() {
+        return extension_loaded('mongo');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function listTables($database = null) {
+        return $this->getConnection()->selectDB($database ?: $this->getDatabase())->getCollectionNames();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function newQuery($type) {
+        return new MongoQuery($type);
     }
 
     /**

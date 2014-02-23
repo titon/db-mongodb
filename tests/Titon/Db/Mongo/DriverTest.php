@@ -24,7 +24,7 @@ class DriverTest extends TestCase {
     protected function setUp() {
         parent::setUp();
 
-        $this->object = new MongoDriver('default', Config::get('db'));
+        $this->object = new MongoDriver(Config::get('db'));
     }
 
     /**
@@ -32,7 +32,7 @@ class DriverTest extends TestCase {
      */
     public function testReplicaSet() {
         try {
-            $this->object->config->replicaSet = 'rs';
+            $this->object->setConfig('replicaSet', 'rs');
             $this->object->connect();
 
             $this->assertTrue(false);
@@ -47,10 +47,10 @@ class DriverTest extends TestCase {
     public function testGetServer() {
         $this->assertEquals('mongodb://127.0.0.1:27017', $this->object->getServer());
 
-        $this->object->config->socket = '/path/to/unix.sock';
+        $this->object->setConfig('socket', '/path/to/unix.sock');
         $this->assertEquals('mongodb:///path/to/unix.sock', $this->object->getServer());
 
-        $this->object->config->servers = ['domain.com:27017', 'localhost:27017'];
+        $this->object->setConfig('servers', ['domain.com:27017', 'localhost:27017']);
         $this->assertEquals('mongodb://domain.com:27017,localhost:27017', $this->object->getServer());
     }
 
@@ -61,7 +61,7 @@ class DriverTest extends TestCase {
         $this->object->connect();
         $this->loadFixtures('Users');
 
-        $this->assertEquals(5, $this->object->query(['count' => 'users'])->count());
+        $this->assertEquals(5, $this->object->executeQuery(['count' => 'users'])->count());
 
         $this->assertEquals([
             'miles',
@@ -69,7 +69,7 @@ class DriverTest extends TestCase {
             'superman',
             'spiderman',
             'wolverine'
-        ], $this->object->query(['distinct' => 'users', 'key' => 'username'])->find());
+        ], $this->object->executeQuery(['distinct' => 'users', 'key' => 'username'])->find());
     }
 
 }

@@ -23,7 +23,7 @@ class ArrayTypeTest extends TestCase {
     protected function setUp() {
         parent::setUp();
 
-        $this->object = new ArrayType(new DriverStub('default', []));
+        $this->object = new ArrayType(new DriverStub([]));
     }
 
     /**

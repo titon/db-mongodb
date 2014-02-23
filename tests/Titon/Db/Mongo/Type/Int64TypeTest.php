@@ -24,7 +24,7 @@ class Int64TypeTest extends TestCase {
     protected function setUp() {
         parent::setUp();
 
-        $this->object = new Int64Type(new DriverStub('default', []));
+        $this->object = new Int64Type(new DriverStub([]));
     }
 
     /**

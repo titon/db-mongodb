@@ -23,7 +23,7 @@ class ObjectTypeTest extends TestCase {
     protected function setUp() {
         parent::setUp();
 
-        $this->object = new ObjectType(new DriverStub('default', []));
+        $this->object = new ObjectType(new DriverStub([]));
     }
 
     /**

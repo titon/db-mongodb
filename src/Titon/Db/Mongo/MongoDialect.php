@@ -67,15 +67,6 @@ class MongoDialect extends AbstractDialect {
     const TYPE_MAX_KEY = 127;
 
     /**
-     * Configuration.
-     *
-     * @type array
-     */
-    protected $_config = [
-        'quoteCharacter' => ''
-    ];
-
-    /**
      * {@inheritdoc}
      */
     protected $_clauses = [

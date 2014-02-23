@@ -7,7 +7,7 @@
 
 namespace Titon\Db\Mongo\Finder;
 
-use Titon\Db\Driver\Finder\ListFinder as BaseListFinder;
+use Titon\Db\Finder\ListFinder as BaseListFinder;
 
 /**
  * Flatten _id fields so they can be extracted.

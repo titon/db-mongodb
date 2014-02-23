@@ -8,6 +8,8 @@
 namespace Titon\Db\Mongo;
 
 use Titon\Db\Entity;
+use Titon\Db\Query\Predicate;
+use Titon\Db\Query;
 use Titon\Test\Stub\Repository\Book;
 use Titon\Test\Stub\Repository\Genre;
 use Titon\Test\Stub\Repository\Profile;
@@ -40,7 +42,7 @@ class RelationTest extends TestCase {
         $profile_id = $user->Profile->id;
 
         // Read
-        $results = $user->select()->where('_id', $user_id)->with('Profile')->fetch();
+        $results = $user->select()->where('_id', $user_id)->with('Profile')->first();
         $results->Profile;
 
         $this->assertEquals(new Entity([
@@ -64,7 +66,7 @@ class RelationTest extends TestCase {
             ]
         ]);
 
-        $results = $user->select()->where('_id', $user_id)->with('Profile')->fetch();
+        $results = $user->select()->where('_id', $user_id)->with('Profile')->first();
         $results->Profile;
 
         $this->assertEquals(new Entity([
@@ -119,7 +121,7 @@ class RelationTest extends TestCase {
         ]);
 
         // Read
-        $actual = $series->select()->where('_id', $series_id)->with('Books')->fetch()->toArray();
+        $actual = $series->select()->where('_id', $series_id)->with('Books')->first()->toArray();
         $book1_id = $actual['Books'][0]['_id'];
 
         $this->assertEquals('A Series Of Unfortunate Events', $actual['name']);
@@ -134,9 +136,9 @@ class RelationTest extends TestCase {
             ]
         ]);
 
-        $actual = $series->select()->where('_id', $series_id)->with('Books', function() {
-            $this->orderBy('_id', 'asc');
-        })->fetch()->toArray();
+        $actual = $series->select()->where('_id', $series_id)->with('Books', function(Query $where) {
+            $where->orderBy('_id', 'asc');
+        })->first()->toArray();
 
         $this->assertArrayHasKey('author', $actual);
         $this->assertEquals('The Bad Beginning (Updated)', $actual['Books'][0]['name']);
@@ -183,7 +185,7 @@ class RelationTest extends TestCase {
                 'firstName' => 'Tony',
                 'lastName' => 'Stark',
             ]
-        ], $profile->select()->where('_id', $profile_id)->with('User')->fetch()->toArray());
+        ], $profile->select()->where('_id', $profile_id)->with('User')->first()->toArray());
     }
 
     /**
@@ -194,7 +196,7 @@ class RelationTest extends TestCase {
 
         $book = new Book();
         $genre = new Genre();
-        $genres = $genre->select()->fetchAll();
+        $genres = $genre->select()->all();
         $g1_id = $genres[0]['_id'];
         $g2_id = $genres[1]['_id'];
         $g3_id = $genres[2]['_id'];
@@ -210,7 +212,7 @@ class RelationTest extends TestCase {
         ]);
 
         // Read
-        $actual = $book->select()->where('_id', $book_id)->with('Genres')->fetch();
+        $actual = $book->select()->where('_id', $book_id)->with('Genres')->first();
 
         $this->assertEquals(3, count($actual['Genres']));
 

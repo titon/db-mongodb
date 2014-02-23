@@ -39,7 +39,7 @@ class UpsertTest extends TestCase {
         $this->loadFixtures('Users');
 
         $user = new User();
-        $ids = $user->select()->fetchAll();
+        $ids = $user->select()->all();
 
         $this->assertEquals(1, $user->select()->where('username', 'miles')->count());
 
@@ -58,7 +58,7 @@ class UpsertTest extends TestCase {
         $this->loadFixtures('Users');
 
         $user = new User();
-        $ids = $user->select()->fetchAll();
+        $ids = $user->select()->all();
 
         $this->assertEquals(1, $user->select()->where('username', 'miles')->count());
 

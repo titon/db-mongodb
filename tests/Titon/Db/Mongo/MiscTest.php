@@ -67,7 +67,7 @@ class MiscTest extends TestCase {
             'double' => 123.45,
             'datetime' => new MongoDate(time()),
             'blob' => new MongoBinData('Binary data!', 2)
-        ]), $mongo->select()->where('_id', $id)->fetch());
+        ]), $mongo->select()->where('_id', $id)->first());
 
         // Test defaults and nulls
         $id = $mongo->create([
@@ -78,15 +78,15 @@ class MiscTest extends TestCase {
             '_id' => $id,
             'array' => null,
             'datetime' => null
-        ]), $mongo->select()->where('_id', $id)->fetch());
+        ]), $mongo->select()->where('_id', $id)->first());
 
         $mongo->query(Query::DROP_TABLE)->save();
     }
 
     /**
-     * Test that fetch list works.
+     * Test that first list works.
      */
-    public function testFetchList() {
+    public function testfirstList() {
         $mongo = new Mongo();
 
         $mongo->create(['name' => 'PHP']);
@@ -94,7 +94,7 @@ class MiscTest extends TestCase {
         $mongo->create(['name' => 'Java']);
         $mongo->create(['name' => 'Python']);
 
-        $this->assertEquals(['PHP', 'RoR', 'Java', 'Python'], array_values($mongo->select()->fetchList('_id', 'name')));
+        $this->assertEquals(['PHP', 'RoR', 'Java', 'Python'], array_values($mongo->select()->lists('name')));
 
         $mongo->query(Query::DROP_TABLE)->save();
     }
